@@ -12,7 +12,11 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
+import fr.omny.flow.data.CrudRepository;
+import fr.omny.flow.data.Repository;
+import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.guis.OGui;
 import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
@@ -22,13 +26,9 @@ import fr.omny.odi.utils.PreClass;
 /**
  * 
  */
-public abstract class FlowPlugin extends JavaPlugin {
+public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 
 	public abstract void load();
-
-	public abstract void start();
-
-	public abstract void stop();
 
 	public abstract String getPackageName();
 
@@ -50,6 +50,14 @@ public abstract class FlowPlugin extends JavaPlugin {
 		Injector.addFrom(packageName);
 		// Load external components from others libraries
 		loadComponents();
+		// Get all classes that implements a repository with the annotation
+		var classes = Utils.getClasses(getPackageName(), klass -> klass.isAnnotationPresent(Repository.class));
+		for (Class<?> implementationClass : classes) {
+			if (CrudRepository.class.isAssignableFrom(implementationClass)) {
+				Object repositoryInstance = RepositoryFactory.createRepository(implementationClass);
+				Injector.addSpecial(implementationClass, repositoryInstance);
+			}
+		}
 		// Init all commands
 		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class);
 		List<Class<?>> commands = Stream.concat(Utils.getClasses(packageName, commandsFilter).stream(),
@@ -86,12 +94,16 @@ public abstract class FlowPlugin extends JavaPlugin {
 				e.printStackTrace();
 			}
 		});
-
+		serverStart(this);
+		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
+				.forEach(sInfo -> sInfo.serverStart(this));
 	}
 
 	@Override
 	public void onDisable() {
-		this.stop();
+		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
+				.forEach(sInfo -> sInfo.serverStop(this));
+		serverStop(this);
 	}
 
 }
