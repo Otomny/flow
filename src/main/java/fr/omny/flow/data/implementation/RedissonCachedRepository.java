@@ -1,40 +1,38 @@
 package fr.omny.flow.data.implementation;
 
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
+import org.bukkit.plugin.Plugin;
 import org.redisson.api.RLiveObjectService;
-import org.redisson.api.RedissonClient;
 
+import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.data.RedisRepository;
-import fr.omny.odi.Autowired;
 
-public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
+public class RedissonCachedRepository<T, ID> implements RedisRepository<T, ID>, ServerInfo {
 
-	@Autowired
-	private RedissonClient client;
-
+	private Map<ID, T> cachedData = new HashMap<>();
 	private Class<?> dataClass;
 	private Class<?> idClass;
 	private RLiveObjectService redisService;
-	private Function<T, ID> mappingFunction;
 
-	public RedissonRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction) {
+	public RedissonCachedRepository(Class<?> dataClass, Class<?> idClass, RLiveObjectService redisService){
+		this.redisService = redisService;
 		this.dataClass = dataClass;
 		this.idClass = idClass;
-		this.redisService = client.getLiveObjectService();
-		this.mappingFunction = mappingFunction;
 	}
 
 	@Override
 	public long count() {
-		throw new UnsupportedOperationException("Count is not implemented");
+		throw new UnsupportedOperationException("count is not implemented");
 	}
 
 	@Override
 	public void delete(T entity) {
-		deleteById(mappingFunction.apply(entity));
+		throw new UnsupportedOperationException("Delete is not implemented");
+
 	}
 
 	@Override
@@ -45,7 +43,8 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
-		entities.forEach(this::delete);
+		throw new UnsupportedOperationException("Delete all is not implemented");
+
 	}
 
 	@Override
@@ -87,6 +86,16 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		throw new UnsupportedOperationException("Save all is not implemented");
+	}
+
+	@Override
+	public void serverStart(Plugin plugin) {
+		throw new UnsupportedOperationException("Load from redis is not implemented");
+	}
+
+	@Override
+	public void serverStop(Plugin plugin) {
+		throw new UnsupportedOperationException("Save to redis is not implemented");
 	}
 
 }

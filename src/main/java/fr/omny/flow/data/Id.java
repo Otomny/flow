@@ -6,9 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface Repository {
-
-	boolean cache() default false;
-
+@Target(ElementType.FIELD)
+public @interface Id {
+	
 }

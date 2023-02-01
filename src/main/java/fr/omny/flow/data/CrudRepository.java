@@ -5,8 +5,11 @@ import java.util.Optional;
 
 /**
  * Repository of Entities
+ * 
+ * SuppressWarnings rawtypes because it's typename, and typename doesn't contains generic identifiers
  */
-public sealed interface CrudRepository<T, ID> permits RedisRepository<T, ID>, MongoRepository<T, ID>, JavaRepository<T, ID> {
+@SuppressWarnings("rawtypes")
+public sealed interface CrudRepository<T, ID> permits RedisRepository, MongoRepository, JavaRepository {
 
 	/**
 	 * Returns the number of entities
