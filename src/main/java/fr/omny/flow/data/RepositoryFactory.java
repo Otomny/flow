@@ -1,12 +1,15 @@
 package fr.omny.flow.data;
 
 
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
 import java.util.function.Function;
 
+import fr.omny.flow.aop.RepositoryProxy;
 import fr.omny.flow.data.implementation.RedissonRepository;
 import fr.omny.flow.utils.Objects;
+import fr.omny.odi.Utils;
 import fr.omny.odi.utils.Reflections;
 import jodd.typeconverter.TypeConversionException;
 
@@ -21,17 +24,20 @@ public class RepositoryFactory {
 	 * @param repositoryClass
 	 * @return
 	 */
-	public static <T, ID> CrudRepository<T, ID> createRepository(Class<?> repositoryClass) {
+	public static <T, ID, C extends CrudRepository<T, ID>> C createRepository(Class<? extends C> repositoryClass) {
 		var typeParameters = repositoryClass.getGenericInterfaces();
 		for (var itype : typeParameters) {
 			var ptype = (ParameterizedType) itype;
 			var typeName = ptype.getRawType().getTypeName();
 			if (typeName.equals(RedisRepository.class.getCanonicalName())) {
-				return createRedisRepository(repositoryClass);
+				return Utils.autowireNoException(
+						RepositoryProxy.createRepositoryProxy(repositoryClass, createRedisRepository(repositoryClass)));
 			} else if (typeName.equals(MongoRepository.class.getCanonicalName())) {
-				return createMongoRepository(repositoryClass);
+				return Utils.autowireNoException(
+						RepositoryProxy.createRepositoryProxy(repositoryClass, createMongoRepository(repositoryClass)));
 			} else if (typeName.equals(JavaRepository.class.getCanonicalName())) {
-				return createJavaRepository(repositoryClass);
+				return Utils.autowireNoException(
+						RepositoryProxy.createRepositoryProxy(repositoryClass, createJavaRepository(repositoryClass)));
 			}
 		}
 		throw new UnsupportedOperationException("Unknown repository is not implemented");
@@ -63,8 +69,9 @@ public class RepositoryFactory {
 	 * @param repositoryClass
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T, ID> RedisRepository<T, ID> createRedisRepository(Class<?> repositoryClass) {
-		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), repositoryClass);
+		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), RedisRepository.class);
 		Class<?>[] classes = List.of(typeNames).stream().map(m -> {
 			try {
 				return Class.forName(m);
@@ -75,7 +82,13 @@ public class RepositoryFactory {
 		}).filter(Objects::notNull).toArray(Class<?>[]::new);
 		var dataType = classes[0];
 		var keyType = classes[1];
-		return new RedissonRepository<>(dataType, keyType, mappingFactory(repositoryClass));
+		try {
+			return Utils.callConstructor(RedissonRepository.class, dataType, keyType,
+					mappingFactory(repositoryClass, RedisRepository.class));
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
@@ -84,8 +97,8 @@ public class RepositoryFactory {
 	 * @param repositoryClass
 	 * @return
 	 */
-	public static <T, ID> Function<T, ID> mappingFactory(Class<?> repositoryClass) {
-		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), repositoryClass);
+	public static <T, ID> Function<T, ID> mappingFactory(Class<?> repositoryClass, Class<?> repositoryInterface) {
+		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), repositoryInterface);
 		Class<?>[] classes = List.of(typeNames).stream().map(m -> {
 			try {
 				return Class.forName(m);

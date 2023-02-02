@@ -12,15 +12,13 @@ import fr.omny.odi.Autowired;
 
 public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 
-	@Autowired
-	private RedissonClient client;
-
 	private Class<?> dataClass;
 	private Class<?> idClass;
 	private RLiveObjectService redisService;
 	private Function<T, ID> mappingFunction;
 
-	public RedissonRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction) {
+	public RedissonRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
+			@Autowired RedissonClient client) {
 		this.dataClass = dataClass;
 		this.idClass = idClass;
 		this.redisService = client.getLiveObjectService();
@@ -61,12 +59,13 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 
 	@Override
 	public boolean existsById(ID id) {
-		throw new UnsupportedOperationException("Exist by id is not implemented");
+		return this.redisService.get(dataClass, id) != null;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Optional<T> findById(ID id) {
-		throw new UnsupportedOperationException("Find by id is not implemented");
+		return (Optional<T>) Optional.ofNullable(this.redisService.get(dataClass, id));
 	}
 
 	@Override
@@ -81,7 +80,8 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 
 	@Override
 	public <S extends T> boolean save(S entity) {
-		throw new UnsupportedOperationException("Save is not implemented");
+		this.redisService.persist(entity);
+		return true;
 	}
 
 	@Override

@@ -4,7 +4,9 @@ package fr.omny.flow.plugins;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.bukkit.Bukkit;
@@ -14,6 +16,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
+import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.CrudRepository;
 import fr.omny.flow.data.Repository;
 import fr.omny.flow.data.RepositoryFactory;
@@ -41,6 +44,15 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		this.load();
 		OGui.register(this);
 
+		// Read config file
+		this.saveDefaultConfig();
+		var configFile = getConfig();
+
+		// Register pre wire initializer
+		var configApplier = new ConfigApplier(configFile);
+		Utils.registerCallConstructor(configApplier);
+		Injector.registerWireListener(configApplier);
+
 		List<String> ignorePackages = List.of("fr.omny.guis");
 
 		String packageName = getPackageName();
@@ -54,8 +66,12 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		var classes = Utils.getClasses(getPackageName(), klass -> klass.isAnnotationPresent(Repository.class));
 		for (Class<?> implementationClass : classes) {
 			if (CrudRepository.class.isAssignableFrom(implementationClass)) {
-				Object repositoryInstance = RepositoryFactory.createRepository(implementationClass);
-				Injector.addSpecial(implementationClass, repositoryInstance);
+				@SuppressWarnings({
+						"unchecked", "rawtypes" })
+				Class<? extends CrudRepository> sKlass = (Class<? extends CrudRepository>) implementationClass;
+				@SuppressWarnings("unchecked")
+				Object repositoryInstance = RepositoryFactory.createRepository(sKlass);
+				Injector.addService(implementationClass, repositoryInstance);
 			}
 		}
 		// Init all commands
@@ -81,8 +97,9 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		Predicate<PreClass> listenerFilter = preClass -> preClass.isInterfacePresent(Listener.class)
 				&& !ignorePackages.stream().anyMatch(s -> s.startsWith(preClass.getPackageName()));
 
-		List<Class<?>> listeners = Stream.concat(Utils.getClasses(packageName, listenerFilter).stream(),
-				Utils.getClasses(getClass().getPackageName(), listenerFilter).stream()).toList();
+		// No duplicate
+		Set<Class<?>> listeners = Stream.concat(Utils.getClasses(packageName, listenerFilter).stream(),
+				Utils.getClasses(getClass().getPackageName(), listenerFilter).stream()).collect(Collectors.toSet());
 
 		listeners.forEach(klass -> {
 			try {
