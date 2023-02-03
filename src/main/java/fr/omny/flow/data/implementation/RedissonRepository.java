@@ -27,7 +27,7 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 
 	@Override
 	public long count() {
-		throw new UnsupportedOperationException("Count is not implemented");
+		return this.redisService.count(dataClass, null);
 	}
 
 	@Override
