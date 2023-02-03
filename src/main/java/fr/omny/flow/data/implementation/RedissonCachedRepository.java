@@ -7,9 +7,11 @@ import java.util.Optional;
 
 import org.bukkit.plugin.Plugin;
 import org.redisson.api.RLiveObjectService;
+import org.redisson.api.RedissonClient;
 
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.data.RedisRepository;
+import fr.omny.odi.Autowired;
 
 public class RedissonCachedRepository<T, ID> implements RedisRepository<T, ID>, ServerInfo {
 
@@ -18,39 +20,35 @@ public class RedissonCachedRepository<T, ID> implements RedisRepository<T, ID>, 
 	private Class<?> idClass;
 	private RLiveObjectService redisService;
 
-	public RedissonCachedRepository(Class<?> dataClass, Class<?> idClass, RLiveObjectService redisService){
-		this.redisService = redisService;
+	public RedissonCachedRepository(Class<?> dataClass, Class<?> idClass, @Autowired RedissonClient client) {
+		this.redisService = client.getLiveObjectService();
 		this.dataClass = dataClass;
 		this.idClass = idClass;
 	}
 
 	@Override
 	public long count() {
-		throw new UnsupportedOperationException("count is not implemented");
+		return this.redisService.count(dataClass, null);
 	}
 
 	@Override
 	public void delete(T entity) {
 		throw new UnsupportedOperationException("Delete is not implemented");
-
 	}
 
 	@Override
 	public void deleteAll() {
 		throw new UnsupportedOperationException("Delete all is not implemented");
-
 	}
 
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
 		throw new UnsupportedOperationException("Delete all is not implemented");
-
 	}
 
 	@Override
 	public void deleteById(ID id) {
 		throw new UnsupportedOperationException("Delete by id is not implemented");
-
 	}
 
 	@Override
@@ -60,12 +58,20 @@ public class RedissonCachedRepository<T, ID> implements RedisRepository<T, ID>, 
 
 	@Override
 	public boolean existsById(ID id) {
-		throw new UnsupportedOperationException("Exist by id is not implemented");
+		return this.cachedData.containsKey(id) || this.redisService.get(dataClass, id) != null;
 	}
 
 	@Override
+	@SuppressWarnings("unchecked")
 	public Optional<T> findById(ID id) {
-		throw new UnsupportedOperationException("Find by id is not implemented");
+		if (this.cachedData.containsKey(id)) {
+			return Optional.of(this.cachedData.get(id));
+		}
+		var data = (T) this.redisService.get(dataClass, id);
+		if (data == null)
+			return Optional.empty();
+		this.cachedData.put(id, data);
+		return Optional.of(data);
 	}
 
 	@Override
