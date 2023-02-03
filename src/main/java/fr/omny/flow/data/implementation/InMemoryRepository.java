@@ -4,6 +4,7 @@ package fr.omny.flow.data.implementation;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import fr.omny.flow.data.JavaRepository;
@@ -15,8 +16,11 @@ import fr.omny.flow.utils.Objects;
 public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 
 	private Map<ID, T> data = new ConcurrentHashMap<>();
+	private Function<T, ID> mappingFunction;
 
-	public InMemoryRepository() {}
+	public InMemoryRepository(Function<T, ID> mappingFunction) {
+		this.mappingFunction = mappingFunction;
+	}
 
 	@Override
 	public long count() {
@@ -25,7 +29,7 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 
 	@Override
 	public void delete(T entity) {
-		throw new UnsupportedOperationException("Delete is not implemented");
+		this.data.remove(mappingFunction.apply(entity));
 	}
 
 	@Override
@@ -35,7 +39,7 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
-		throw new UnsupportedOperationException("Delete all is not implemented");
+		entities.forEach(this::delete);
 	}
 
 	@Override

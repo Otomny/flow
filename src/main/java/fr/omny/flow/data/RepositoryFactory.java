@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.function.Function;
 
 import fr.omny.flow.aop.RepositoryProxy;
+import fr.omny.flow.data.implementation.InMemoryRepository;
 import fr.omny.flow.data.implementation.RedissonRepository;
 import fr.omny.flow.utils.Objects;
 import fr.omny.odi.Utils;
@@ -49,8 +50,14 @@ public class RepositoryFactory {
 	 * @param repositoryClass
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T, ID> JavaRepository<T, ID> createJavaRepository(Class<?> repositoryClass) {
-		throw new UnsupportedOperationException("Creating java repository is not implemented");
+		try {
+			return Utils.callConstructor(InMemoryRepository.class, mappingFactory(repositoryClass, JavaRepository.class));
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
