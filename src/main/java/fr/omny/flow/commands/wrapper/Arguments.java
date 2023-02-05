@@ -16,6 +16,15 @@ public class Arguments {
 	/**
 	 * 
 	 * @param index
+	 * @param obj
+	 */
+	public void put(int index, Object obj){
+		this.arguments.put(index, obj);
+	}
+
+	/**
+	 * 
+	 * @param index
 	 * @return
 	 */
 	public boolean isPresent(int index) {
@@ -30,6 +39,14 @@ public class Arguments {
 	 */
 	public boolean isPresent(int index, Class<?> klass) {
 		return isPresent(index) && arguments.get(index) != null && klass.isAssignableFrom(arguments.get(index).getClass());
+	}
+
+	/**
+	 * Number of arguments passed
+	 * @return
+	 */
+	public int count(){
+		return this.arguments.size();
 	}
 
 	/**
