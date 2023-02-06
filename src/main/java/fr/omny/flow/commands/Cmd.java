@@ -127,7 +127,7 @@ public abstract class Cmd extends Command implements CommandComponent {
 						}
 					} else if (comp instanceof SubCmd subCmd) {
 						if (textValue.equalsIgnoreCase(subCmd.getName())) {
-							return subCmd.execute(sender, Arrays.copyOfRange(args, index, args.length));
+							return subCmd.execute(sender, Arrays.copyOfRange(args, index+1, args.length));
 						}
 					}
 				}

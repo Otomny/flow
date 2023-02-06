@@ -3,6 +3,7 @@ package fr.omny.flow.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,11 +24,8 @@ public abstract class SubCmd implements CommandComponent {
 	private String permission;
 	private boolean optional;
 
-	public SubCmd(String name) {
-		this.name = name;
-	}
-
 	public SubCmd(String name, boolean optional) {
+		this.comps = new HashMap<>();
 		this.name = name;
 		this.optional = optional;
 	}
@@ -70,7 +68,7 @@ public abstract class SubCmd implements CommandComponent {
 			commandComponents.add(commandComponent);
 			comps.put(index, commandComponents);
 		}
-		if(commandComponent instanceof SubCmd subCmd){
+		if (commandComponent instanceof SubCmd subCmd) {
 			Injector.wire(subCmd);
 		}
 	}
@@ -93,26 +91,49 @@ public abstract class SubCmd implements CommandComponent {
 
 		// Main loop
 		CompLoop: for (int index : comps.keySet()) {
-			List<CommandComponent> comps = this.comps.get(index);
-			boolean allOptional = comps.stream().allMatch(CommandComponent::isOptional);
-
-			if (!allOptional && args.length <= index)
-				return false;
-			String textValue = args[index];
-			for (CommandComponent comp : comps) {
-				if (comp instanceof CmdArgument<?> cmdArgument) {
-					var value = cmdArgument.getValue(textValue, sender, arguments);
-					if (value.isPresent()) {
-						arguments.put(index, value.get());
-						continue CompLoop;
-					}
-				} else if (comp instanceof SubCmd subCmd) {
-					if (textValue.equalsIgnoreCase(subCmd.getName())) {
-						return subCmd.execute(sender, Arrays.copyOfRange(args, index, args.length));
+			List<CommandComponent> components = this.comps.get(index);
+			boolean allOptional = components.stream().allMatch(CommandComponent::isOptional);
+			// args.length == 0
+			// comps.size() == 1
+			// index = 0
+			if (allOptional && index >= args.length)
+				break CompLoop;
+			if (args.length > index) {
+				String textValue = args[index];
+				for (CommandComponent comp : components) {
+					if (comp instanceof CmdArgument<?> cmdArgument) {
+						var value = cmdArgument.getValue(textValue, sender, arguments);
+						if (value.isPresent()) {
+							arguments.put(index, value.get());
+							continue CompLoop;
+						}
+					} else if (comp instanceof SubCmd subCmd) {
+						if (textValue.equalsIgnoreCase(subCmd.getName())) {
+							return subCmd.execute(sender, Arrays.copyOfRange(args, index, args.length));
+						}
 					}
 				}
 			}
-			// TODO impossible (no command comps found for specific string)
+
+			StringBuilder usage = new StringBuilder("/" + this.getName() + " ");
+			for (int i = 0; i < comps.size(); i++) {
+				List<CommandComponent> localsComps = this.comps.get(i);
+				if (localsComps.isEmpty())
+					continue;
+				if (localsComps.size() == 1) {
+					usage.append("<" + localsComps.get(0).getName() + ">");
+				} else {
+					usage.append("<(");
+					for (CommandComponent comp : localsComps) {
+						usage.append(comp.getName() + "|");
+					}
+					usage.replace(usage.length() - 1, usage.length(), "");
+					usage.append(")>");
+				}
+				usage.append(" ");
+			}
+			usage.replace(usage.length() - 1, usage.length(), "");
+			sender.sendMessage("§cUsage: " + usage.toString());
 			return false;
 		}
 		execute(sender, arguments);
