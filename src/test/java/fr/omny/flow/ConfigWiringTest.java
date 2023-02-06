@@ -1,5 +1,6 @@
 package fr.omny.flow;
 
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -15,10 +16,10 @@ import fr.omny.odi.Injector;
 import lombok.Getter;
 
 public class ConfigWiringTest {
-	
+
 	@Test
-	public void wireConfig(){
-		var config = new DummyFileConfiguration(Map.of("name", "Hello world"));
+	public void wireConfig() {
+		var config = new DummyFileConfiguration(Map.of("name", "Hello world", "nested.key.of.interesting.data", 69420));
 		Injector.startTest();
 		Injector.registerWireListener(new ConfigApplier(config));
 
@@ -27,17 +28,21 @@ public class ConfigWiringTest {
 		Injector.wire(service);
 		assertNotNull(service.getName());
 		assertEquals("Hello world", service.getName());
+		assertEquals(69420, service.getData());
 
 		Injector.wipeTest();
 	}
 
-	public static class Service{
+	@Getter
+	public static class Service {
 
-		@Getter
 		@Config("name")
 		private String name;
-		
+
+		@Config("nested.key.of.interesting.data")
+		private int data;
+
+
 	}
-	
 
 }

@@ -3,18 +3,32 @@ package fr.omny.flow.command;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.bukkit.command.CommandSender;
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.commands.arguments.IntegerArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
 import fr.omny.flow.entity.DummyCommandSender;
+import fr.omny.odi.Injector;
 import lombok.Getter;
 
 public class SingleArgumentCommandTest {
+
+	@Before
+	public void setupForEach(){
+		Injector.startTest();
+	}
+
+	@After
+	public void tearDownForEach(){
+		Injector.wipeTest();
+	}
 
 	@Test
 	public void test_ExecuteCommand_NoArguments() {
@@ -22,7 +36,8 @@ public class SingleArgumentCommandTest {
 		var cmd = new DummyCommand();
 		var result = cmd.execute(sender, "dummy", new String[] {});
 		assertFalse(result);
-		assertEquals("", sender.getReceivedMessages().get(0));
+		assertNull(cmd.args);
+		assertEquals("§cUsage: /dummy <Count>", sender.getReceivedMessages().get(0));
 	}
 
 	@Test
