@@ -8,6 +8,7 @@ import java.util.function.Function;
 
 import fr.omny.flow.aop.RepositoryProxy;
 import fr.omny.flow.data.implementation.InMemoryRepository;
+import fr.omny.flow.data.implementation.MongoDBRepository;
 import fr.omny.flow.data.implementation.RedissonRepository;
 import fr.omny.flow.utils.Objects;
 import fr.omny.odi.Utils;
@@ -66,8 +67,26 @@ public class RepositoryFactory {
 	 * @param repositoryClass
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T, ID> MongoRepository<T, ID> createMongoRepository(Class<?> repositoryClass) {
-		throw new UnsupportedOperationException("Creating mongo repository is not implemented");
+		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), MongoRepository.class);
+		Class<?>[] classes = List.of(typeNames).stream().map(m -> {
+			try {
+				return Class.forName(m);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+			return null;
+		}).filter(Objects::notNull).toArray(Class<?>[]::new);
+		var dataType = classes[0];
+		var keyType = classes[1];
+		try {
+			return Utils.callConstructor(MongoDBRepository.class, dataType, keyType,
+					mappingFactory(repositoryClass, MongoRepository.class));
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		return null;
 	}
 
 	/**
