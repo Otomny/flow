@@ -2,6 +2,7 @@ package fr.omny.flow.translation;
 
 
 import java.util.HashMap;
+import java.util.Optional;
 
 import org.bukkit.entity.Player;
 
@@ -14,7 +15,7 @@ public class I18N {
 	@Autowired
 	private TranslationRepository repository;
 	@Autowired
-	private PlayerToLocaleProvider provider;
+	private Optional<PlayerToLocaleProvider> provider;
 
 	public I18N() {}
 
@@ -48,10 +49,7 @@ public class I18N {
 	 * @return the translation or a default one
 	 */
 	public String get(Player player, String key) {
-		if (this.provider == null) {
-			throw new IllegalStateException("PlayerToLocaleProvider component not found, you must implement it");
-		}
-		return get(this.provider.locale(player), key);
+		return get(this.provider.orElse(new DefaultPlayerLocaleProvider()).locale(player), key);
 	}
 
 	/**
