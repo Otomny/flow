@@ -3,6 +3,7 @@ package fr.omny.flow.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -138,6 +139,37 @@ public abstract class SubCmd implements CommandComponent {
 		}
 		execute(sender, arguments);
 		return true;
+	}
+
+	public List<String> tabComplete(CommandSender sender, String[] args) {
+		List<String> array = new ArrayList<>();
+
+		int depth = args.length == 0 ? 0 : args.length - 1;
+		String lastWord = args.length == 0 ? "" : args[args.length - 1];
+		List<CommandComponent> components = this.comps.get(depth);
+		if (args.length >= 1) {
+			String firstWord = args[0];
+			List<CommandComponent> firstComponents = this.comps.get(0);
+			if (firstComponents != null && !firstComponents.isEmpty()) {
+				firstComponents.stream().filter(SubCmd.class::isInstance).map(SubCmd.class::cast)
+						.filter(subCmd -> subCmd.getName().equalsIgnoreCase(firstWord)).findFirst()
+						.ifPresent(subCmd -> array.addAll(subCmd.tabComplete(sender, Arrays.copyOfRange(args, 1, args.length))));
+			}
+		}
+		if (components != null) {
+			components.stream().map(s -> {
+				if (s instanceof SubCmd subCmd) {
+					return List.of(subCmd.getName());
+				} else if (s instanceof CmdArgument<?> cmdArgument) {
+					return cmdArgument.getValues(sender, new Arguments());
+				} else {
+					return new ArrayList<String>();
+				}
+			}).flatMap(List::stream).filter(s -> s.toLowerCase().startsWith(lastWord.toLowerCase())).map(String::toLowerCase)
+					.forEach(array::add);
+		}
+		Collections.sort(array);
+		return array;
 	}
 
 }

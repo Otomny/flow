@@ -3,6 +3,7 @@ package fr.omny.flow.commands;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +115,7 @@ public abstract class Cmd extends Command implements CommandComponent {
 			// args.length == 0
 			// comps.size() == 1
 			// index = 0
-			if(allOptional && index >= args.length)
+			if (allOptional && index >= args.length)
 				break CompLoop;
 			if (args.length > index) {
 				String textValue = args[index];
@@ -127,7 +128,7 @@ public abstract class Cmd extends Command implements CommandComponent {
 						}
 					} else if (comp instanceof SubCmd subCmd) {
 						if (textValue.equalsIgnoreCase(subCmd.getName())) {
-							return subCmd.execute(sender, Arrays.copyOfRange(args, index+1, args.length));
+							return subCmd.execute(sender, Arrays.copyOfRange(args, index + 1, args.length));
 						}
 					}
 				}
@@ -161,7 +162,42 @@ public abstract class Cmd extends Command implements CommandComponent {
 	@Override
 	public List<String> tabComplete(CommandSender sender, String alias, String[] args, Location location)
 			throws IllegalArgumentException {
-		return super.tabComplete(sender, alias, args, location);
+		return this.tabComplete(sender, alias, args);
+	}
+
+	@Override
+	public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
+		List<String> array = new ArrayList<>();
+
+		int depth = args.length == 0 ? 0 : args.length - 1;
+		String lastWord = args.length == 0 ? "" : args[args.length - 1];
+		List<CommandComponent> components = this.comps.get(depth);
+		if (args.length >= 1) {
+			String firstWord = args[0];
+			List<CommandComponent> firstComponents = this.comps.get(0);
+			if (firstComponents != null && !firstComponents.isEmpty()) {
+				var possibleSubCmd = firstComponents.stream().filter(SubCmd.class::isInstance).map(SubCmd.class::cast)
+						.filter(subCmd -> subCmd.getName().equalsIgnoreCase(firstWord)).findFirst();
+				if (possibleSubCmd.isPresent()) {
+					array.addAll(possibleSubCmd.get().tabComplete(sender, Arrays.copyOfRange(args, 1, args.length)));
+					return array;
+				}
+			}
+		}
+		if (components != null) {
+			components.stream().map(s -> {
+				if (s instanceof SubCmd subCmd) {
+					return List.of(subCmd.getName());
+				} else if (s instanceof CmdArgument<?> cmdArgument) {
+					return cmdArgument.getValues(sender, new Arguments());
+				} else {
+					return new ArrayList<String>();
+				}
+			}).flatMap(List::stream).filter(s -> s.toLowerCase().startsWith(lastWord.toLowerCase())).map(String::toLowerCase)
+					.forEach(array::add);
+		}
+		Collections.sort(array);
+		return array;
 	}
 
 }
