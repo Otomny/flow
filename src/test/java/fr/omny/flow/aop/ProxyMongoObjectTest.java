@@ -4,8 +4,10 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.bson.Document;
 import org.junit.Test;
 
+import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
 
 public class ProxyMongoObjectTest {
@@ -30,6 +32,16 @@ public class ProxyMongoObjectTest {
 
 		assertEquals("No hello world :(", worldReference.get());
 		assertEquals("Hello world!", oldWorldReference.get());
+	}
+
+	@Test
+	public void test_Proxy_ToDocument() throws Exception {
+		DummyObject originalObject = new DummyObject();
+		originalObject.setWorld("Man I Can't");
+		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {});
+		Document documentObj = MongoSerializer.transform(proxiedObject, DummyObject.class);
+		assertEquals("Man I Can't", documentObj.getString("world"));
+
 	}
 
 	

@@ -1,6 +1,7 @@
 package fr.omny.flow.aop;
 
 
+import fr.omny.flow.data.Val;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -8,6 +9,7 @@ import lombok.Setter;
 @Setter
 public class DummyObject {
 
+	@Val
 	private String world = "Hello world!";
 
 	DummyObject(){}
