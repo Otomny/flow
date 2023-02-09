@@ -1,17 +1,23 @@
 package fr.omny.flow.data.implementation;
 
 
-import java.lang.reflect.Field;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
 
 import org.bson.Document;
+import org.redisson.api.RTopic;
+import org.redisson.api.RedissonClient;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Filters;
+import com.mongodb.client.model.Projections;
 
 import fr.omny.flow.data.MongoRepository;
+import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.utils.StrUtils;
 import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.odi.Autowired;
@@ -22,22 +28,30 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 	private Class<?> idClass;
 	private MongoDatabase db;
 	private MongoCollection<Document> collection;
+	private Map<ID, T> cachedData = new HashMap<>();
+	private String collectionName;
 
 	// Mapping function
 	private Function<T, ID> getId;
 	private Function<T, Document> toDocument;
 	private Function<Document, T> fromDocument;
+	private RTopic topic;
 
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
-			@Autowired MongoClient client) {
+			@Autowired RedissonClient redissonClient, @Autowired MongoClient client) {
+		this.collectionName = StrUtils.toSnakeCase(dataClass.getSimpleName());
 		this.dataClass = dataClass;
 		this.idClass = idClass;
 		this.db = client.getDatabase("flow");
-		this.collection = db.getCollection(StrUtils.toSnakeCase(dataClass.getSimpleName()));
+		this.collection = db.getCollection(this.collectionName);
 		this.getId = mappingFunction;
 
-		this.toDocument = MongoSerializer::transform;
-		
+		this.toDocument = (obj) -> MongoSerializer.transform(obj, dataClass);
+
+		this.topic = redissonClient.getTopic(this.collectionName);
+		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
+			throw new UnsupportedOperationException("Field update is not implemented");
+		});
 	}
 
 	@Override
@@ -48,7 +62,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 	@Override
 	public void delete(T entity) {
 		throw new UnsupportedOperationException("Delete is not implemented");
-
 	}
 
 	@Override
@@ -76,7 +89,8 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 
 	@Override
 	public boolean existsById(ID id) {
-		throw new UnsupportedOperationException("Exists is not implemented");
+		var projectionFields = Projections.fields(Projections.include("_id"));
+		return this.collection.find(Filters.eq("_id", id.toString())).projection(projectionFields).first() != null;
 	}
 
 	@Override
@@ -96,7 +110,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 
 	@Override
 	public <S extends T> boolean save(S entity) {
-		throw new UnsupportedOperationException("not implemented");
+		var id = getId.apply(entity).toString();
+		Document document = toDocument.apply(entity);
+		document.append("_id", id);
+		var result = this.collection.insertOne(document);
+		return result.wasAcknowledged();
 	}
 
 	@Override

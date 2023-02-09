@@ -10,6 +10,7 @@ import org.bson.codecs.configuration.CodecRegistry;
 
 import com.mongodb.MongoClientSettings;
 
+import fr.omny.flow.utils.mongodb.codecs.ItemStackCodec;
 import fr.omny.flow.utils.mongodb.codecs.LocationCodec;
 import fr.omny.flow.utils.mongodb.codecs.WorldCodec;
 import fr.omny.odi.Component;
@@ -23,7 +24,8 @@ public class FlowCodec {
 		// Initializing
 		this.codecs.addAll(List.of(
 			new LocationCodec(),
-			new WorldCodec()
+			new WorldCodec(),
+			new ItemStackCodec()
 		));
 	}
 

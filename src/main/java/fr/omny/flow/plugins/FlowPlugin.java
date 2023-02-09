@@ -56,12 +56,12 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		List<String> ignorePackages = List.of("fr.omny.guis");
 
 		String packageName = getPackageName();
+		// Load external components from others libraries
+		loadComponents();
 		// Init all component instance
 		Injector.startApplication(FlowPlugin.class, getLogger());
 		// Add plugins components
 		Injector.addFrom(packageName);
-		// Load external components from others libraries
-		loadComponents();
 		// Get all classes that implements a repository with the annotation
 		var classes = Utils.getClasses(getPackageName(), klass -> klass.isAnnotationPresent(Repository.class));
 		for (Class<?> implementationClass : classes) {
