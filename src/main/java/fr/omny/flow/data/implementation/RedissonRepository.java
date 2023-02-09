@@ -23,6 +23,7 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 		this.idClass = idClass;
 		this.redisService = client.getLiveObjectService();
 		this.mappingFunction = mappingFunction;
+		
 	}
 
 	@Override
@@ -38,7 +39,6 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 	@Override
 	public void deleteAll() {
 		throw new UnsupportedOperationException("Delete all is not implemented");
-
 	}
 
 	@Override
