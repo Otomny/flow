@@ -8,7 +8,7 @@ import org.junit.runners.Suite;
 
 @Suite.SuiteClasses({
 		SingleArgumentCommandTest.class, MultipleArgumentCommandTest.class, OptionalCommandTest.class,
-		TabCompleteCommandTest.class, SubCommandTest.class })
+		TabCompleteCommandTest.class, SubCommandTest.class, SentenceArgumentTest.class })
 public class CommandTestSuite {
 
 }

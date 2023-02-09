@@ -8,11 +8,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.IntStream;
 
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 
+import fr.omny.flow.commands.arguments.SentenceArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
 import fr.omny.flow.translation.I18N;
 import fr.omny.odi.Autowired;
@@ -121,10 +123,19 @@ public abstract class Cmd extends Command implements CommandComponent {
 				String textValue = args[index];
 				for (CommandComponent comp : components) {
 					if (comp instanceof CmdArgument<?> cmdArgument) {
-						var value = cmdArgument.getValue(textValue, sender, arguments);
-						if (value.isPresent()) {
-							arguments.put(index, value.get());
-							continue CompLoop;
+						// Specific component
+						if (cmdArgument instanceof SentenceArgument setence) {
+							int from = index;
+							int to = args.length;
+							var sentence = String.join(" ", IntStream.range(from, to).mapToObj(i -> args[i]).toList());
+							arguments.put(index, sentence);
+							break CompLoop;
+						} else {
+							var value = cmdArgument.getValue(textValue, sender, arguments);
+							if (value.isPresent()) {
+								arguments.put(index, value.get());
+								continue CompLoop;
+							}
 						}
 					} else if (comp instanceof SubCmd subCmd) {
 						if (textValue.equalsIgnoreCase(subCmd.getName())) {
