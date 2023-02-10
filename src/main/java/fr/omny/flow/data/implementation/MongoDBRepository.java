@@ -5,8 +5,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import org.bson.Document;
+import org.bukkit.Bukkit;
+import org.bukkit.plugin.Plugin;
 import org.redisson.api.RTopic;
 import org.redisson.api.RedissonClient;
 
@@ -16,13 +19,16 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
 
+import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.data.MongoRepository;
 import fr.omny.flow.data.ObjectUpdate;
+import fr.omny.flow.events.data.DataUpdateEvent;
 import fr.omny.flow.utils.StrUtils;
 import fr.omny.flow.utils.mongodb.MongoSerializer;
+import fr.omny.flow.utils.mongodb.ProxyMongoObject;
 import fr.omny.odi.Autowired;
 
-public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
+public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerInfo {
 
 	private Class<?> dataClass;
 	private Class<?> idClass;
@@ -37,6 +43,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 	private Function<Document, T> fromDocument;
 	private RTopic topic;
 
+	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
 			@Autowired RedissonClient redissonClient, @Autowired MongoClient client) {
 		this.collectionName = StrUtils.toSnakeCase(dataClass.getSimpleName());
@@ -47,11 +54,29 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 		this.getId = mappingFunction;
 
 		this.toDocument = (obj) -> MongoSerializer.transform(obj, dataClass);
+		this.fromDocument = (doc) -> {
+			var initial = MongoSerializer.from(doc, dataClass);
+			try {
+				var proxy = ProxyMongoObject.createProxy(initial, (fieldData) -> {
+					throw new UnsupportedOperationException("Field update topic publish is not implemented");
+				});
+				return (T) proxy;
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		};
 
 		this.topic = redissonClient.getTopic(this.collectionName);
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
-			throw new UnsupportedOperationException("Field update is not implemented");
+			var event = new DataUpdateEvent(this, this.dataClass, objectUpdate);
+			Bukkit.getServer().getPluginManager().callEvent(event);
+			throw new UnsupportedOperationException("Field update listener is not implemented");
 		});
+	}
+
+	protected <S extends T> boolean isProxy(S entity) {
+		var entClass = entity.getClass();
+		return !this.dataClass.isAssignableFrom(entClass) && this.dataClass != entClass;
 	}
 
 	@Override
@@ -84,7 +109,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 	@Override
 	public void deleteAllById(Iterable<? extends ID> ids) {
 		throw new UnsupportedOperationException("Delete all by id is not implemented");
-
 	}
 
 	@Override
@@ -95,12 +119,15 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 
 	@Override
 	public Optional<T> findById(ID id) {
-		throw new UnsupportedOperationException("Find is not implemented");
+		Document document = this.collection.find(Filters.eq("_id", id.toString())).first();
+		return document == null ? Optional.empty() : Optional.of(this.fromDocument.apply(document));
 	}
 
 	@Override
 	public Iterable<T> findAll() {
-		throw new UnsupportedOperationException("not implemented");
+		return StreamSupport.stream(this.collection.find().spliterator(), false)
+			.map(this.fromDocument)
+			.toList();
 	}
 
 	@Override
@@ -120,6 +147,16 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID> {
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		throw new UnsupportedOperationException("not implemented");
+	}
+
+	@Override
+	public void serverStart(Plugin plugin) {
+
+	}
+
+	@Override
+	public void serverStop(Plugin plugin) {
+
 	}
 
 }

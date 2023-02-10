@@ -54,7 +54,8 @@ public class RepositoryFactory {
 	@SuppressWarnings("unchecked")
 	public static <T, ID> JavaRepository<T, ID> createJavaRepository(Class<?> repositoryClass) {
 		try {
-			return Utils.callConstructor(InMemoryRepository.class, mappingFactory(repositoryClass, JavaRepository.class));
+			return Utils.callConstructor(InMemoryRepository.class, false,
+					mappingFactory(repositoryClass, JavaRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
 		}
@@ -81,7 +82,7 @@ public class RepositoryFactory {
 		var dataType = classes[0];
 		var keyType = classes[1];
 		try {
-			return Utils.callConstructor(MongoDBRepository.class, dataType, keyType,
+			return Utils.callConstructor(MongoDBRepository.class, false, dataType, keyType,
 					mappingFactory(repositoryClass, MongoRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -109,7 +110,7 @@ public class RepositoryFactory {
 		var dataType = classes[0];
 		var keyType = classes[1];
 		try {
-			return Utils.callConstructor(RedissonRepository.class, dataType, keyType,
+			return Utils.callConstructor(RedissonRepository.class, false, dataType, keyType,
 					mappingFactory(repositoryClass, RedisRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -138,20 +139,27 @@ public class RepositoryFactory {
 
 		for (var field : dataType.getDeclaredFields()) {
 			if (field.isAnnotationPresent(Id.class) && keyType.isAssignableFrom(field.getType())) {
-				return new Function<T, ID>() {
+				var fieldName = field.getName();
+				var getterMethodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+				try {
+					var method = dataType.getDeclaredMethod(getterMethodName, new Class<?>[] {});
+					return new Function<T, ID>() {
 
-					@Override
-					@SuppressWarnings("unchecked")
-					public ID apply(T data) {
-						try {
-							return (ID) field.get(data);
-						} catch (IllegalArgumentException | IllegalAccessException e) {
-							e.printStackTrace();
+						@Override
+						@SuppressWarnings("unchecked")
+						public ID apply(T data) {
+							try {
+								return (ID) method.invoke(data);
+							} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+								e.printStackTrace();
+							}
+							return null;
 						}
-						return null;
-					}
 
-				};
+					};
+				} catch (NoSuchMethodException | SecurityException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		throw new TypeConversionException(dataType.getCanonicalName()

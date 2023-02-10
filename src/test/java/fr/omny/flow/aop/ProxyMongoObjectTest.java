@@ -38,6 +38,7 @@ public class ProxyMongoObjectTest {
 	public void test_Proxy_ToDocument() throws Exception {
 		DummyObject originalObject = new DummyObject();
 		originalObject.setWorld("Man I Can't");
+		assertEquals("Man I Can't", originalObject.getWorld());
 		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {});
 		Document documentObj = MongoSerializer.transform(proxiedObject, DummyObject.class);
 		assertEquals("Man I Can't", documentObj.getString("world"));
