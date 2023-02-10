@@ -6,6 +6,9 @@ import java.util.Optional;
 /**
  * Repository of Entities
  * 
+ * Each get statement returns a Proxy object
+ * (find, findAll, etc...)
+ * 
  * SuppressWarnings rawtypes because it's typename, and typename doesn't contains generic identifiers
  */
 @SuppressWarnings("rawtypes")
