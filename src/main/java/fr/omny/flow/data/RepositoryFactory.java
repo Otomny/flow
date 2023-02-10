@@ -1,9 +1,11 @@
 package fr.omny.flow.data;
 
 
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 
 import fr.omny.flow.aop.RepositoryProxy;
@@ -118,12 +120,72 @@ public class RepositoryFactory {
 		return null;
 	}
 
+/**
+	 * Create a setter function for a specific field
+	 * 
+	 * @param <T>
+	 * @param dataClass
+	 * @param field
+	 * @return
+	 */
+	public static <T> BiFunction<T, Object, Object> createSetter(Class<?> dataClass, Field field) {
+		var fieldName = field.getName();
+		var setterMethodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		try {
+			var method = dataClass.getDeclaredMethod(setterMethodName, new Class<?>[] {field.getType()});
+			return new BiFunction<T, Object, Object>() {
+				@Override
+				public Object apply(T data, Object fieldData) {
+					try {
+						return (Object) method.invoke(data, fieldData);
+					} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+						throw new RuntimeException(e);
+					}
+				}
+			};
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+	/**
+	 * Create a getter function for a specific field
+	 * 
+	 * @param <T>
+	 * @param dataClass
+	 * @param field
+	 * @return
+	 */
+	public static <T> Function<T, Object> createGetter(Class<?> dataClass, Field field) {
+		var fieldName = field.getName();
+		var getterMethodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
+		try {
+			var method = dataClass.getDeclaredMethod(getterMethodName, new Class<?>[] {});
+			return new Function<T, Object>() {
+
+				@Override
+				public Object apply(T data) {
+					try {
+						return (Object) method.invoke(data);
+					} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+					return null;
+				}
+
+			};
+		} catch (NoSuchMethodException | SecurityException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	/**
 	 * @param <T>
 	 * @param <ID>
 	 * @param repositoryClass
 	 * @return
 	 */
+	@SuppressWarnings("unchecked")
 	public static <T, ID> Function<T, ID> mappingFactory(Class<?> repositoryClass, Class<?> repositoryInterface) {
 		var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), repositoryInterface);
 		Class<?>[] classes = List.of(typeNames).stream().map(m -> {
@@ -139,27 +201,7 @@ public class RepositoryFactory {
 
 		for (var field : dataType.getDeclaredFields()) {
 			if (field.isAnnotationPresent(Id.class) && keyType.isAssignableFrom(field.getType())) {
-				var fieldName = field.getName();
-				var getterMethodName = "get" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
-				try {
-					var method = dataType.getDeclaredMethod(getterMethodName, new Class<?>[] {});
-					return new Function<T, ID>() {
-
-						@Override
-						@SuppressWarnings("unchecked")
-						public ID apply(T data) {
-							try {
-								return (ID) method.invoke(data);
-							} catch (IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
-								e.printStackTrace();
-							}
-							return null;
-						}
-
-					};
-				} catch (NoSuchMethodException | SecurityException e) {
-					e.printStackTrace();
-				}
+				return (Function<T, ID>) createGetter(dataType, field);
 			}
 		}
 		throw new TypeConversionException(dataType.getCanonicalName()

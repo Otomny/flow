@@ -115,6 +115,8 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));
+
+		
 	}
 
 	@Override

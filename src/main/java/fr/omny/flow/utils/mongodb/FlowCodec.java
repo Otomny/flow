@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.bson.codecs.Codec;
+import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
 
@@ -19,27 +20,32 @@ import fr.omny.odi.Component;
 public class FlowCodec {
 
 	private List<Codec<?>> codecs = new ArrayList<>();
+	private List<CodecProvider> codecProviders = new ArrayList<>();
 
-	public FlowCodec(){
+	public FlowCodec() {
 		// Initializing
-		this.codecs.addAll(List.of(
-			new LocationCodec(),
-			new WorldCodec(),
-			new ItemStackCodec()
-		));
+		this.codecs.addAll(List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec()));
 	}
 
 	public void registerCodec(Codec<?> codec) {
 		this.codecs.add(codec);
 	}
 
+	public void registerCodecProvider(CodecProvider provider) {
+		this.codecProviders.add(provider);
+	}
+
 	/**
-	 * 
 	 * @return
 	 */
 	public CodecRegistry getCodecRegistries() {
-		return CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(this.codecs),
-				MongoClientSettings.getDefaultCodecRegistry());
+		if (this.codecProviders.isEmpty()) {
+			return CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(this.codecs),
+					MongoClientSettings.getDefaultCodecRegistry());
+		} else {
+			return CodecRegistries.fromRegistries(CodecRegistries.fromCodecs(this.codecs),
+					CodecRegistries.fromProviders(this.codecProviders), MongoClientSettings.getDefaultCodecRegistry());
+		}
 	}
 
 }

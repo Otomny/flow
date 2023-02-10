@@ -1,6 +1,5 @@
 package fr.omny.flow.events.data;
 
-
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
@@ -9,7 +8,7 @@ import fr.omny.flow.data.ObjectUpdate;
 import lombok.Getter;
 
 @Getter
-public class DataUpdateEvent extends Event {
+public class DataEmitEvent extends Event {
 
 	public static final HandlerList HANDLER_LIST = new HandlerList();
 
@@ -28,7 +27,7 @@ public class DataUpdateEvent extends Event {
 	 * @param repository
 	 * @param update
 	 */
-	public DataUpdateEvent(CrudRepository<?, ?> repository, Class<?> dataClass, ObjectUpdate update) {
+	public DataEmitEvent(CrudRepository<?, ?> repository, Class<?> dataClass, ObjectUpdate update) {
 		super(true);
 		this.repository = repository;
 		this.dataClass = dataClass;
@@ -41,3 +40,4 @@ public class DataUpdateEvent extends Event {
 	}
 
 }
+

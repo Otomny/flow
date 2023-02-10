@@ -1,13 +1,22 @@
 package fr.omny.flow.data.implementation;
 
 
+import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
+import org.bson.BsonDocument;
+import org.bson.BsonDocumentReader;
+import org.bson.BsonDocumentWriter;
 import org.bson.Document;
+import org.bson.codecs.Codec;
+import org.bson.codecs.DecoderContext;
+import org.bson.codecs.EncoderContext;
+import org.bson.conversions.Bson;
 import org.bukkit.Bukkit;
 import org.bukkit.plugin.Plugin;
 import org.redisson.api.RTopic;
@@ -18,17 +27,25 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
+import com.mongodb.client.model.UpdateOptions;
 
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.data.MongoRepository;
 import fr.omny.flow.data.ObjectUpdate;
+import fr.omny.flow.data.RepositoryFactory;
+import fr.omny.flow.events.data.DataEmitEvent;
 import fr.omny.flow.events.data.DataUpdateEvent;
+import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.StrUtils;
+import fr.omny.flow.utils.mongodb.FlowCodec;
 import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
+import fr.omny.flow.utils.mongodb.ProxyMongoObject.FieldData;
 import fr.omny.odi.Autowired;
 
 public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerInfo {
+
+	public static final UpdateOptions UPSERT_OPTIONS = new UpdateOptions().upsert(true);
 
 	private Class<?> dataClass;
 	private Class<?> idClass;
@@ -42,11 +59,17 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	private Function<T, Document> toDocument;
 	private Function<Document, T> fromDocument;
 	private RTopic topic;
+	private Consumer<FieldData<T>> fieldUpdater;
+
+	// Codecs
+	private FlowCodec codecs;
 
 	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
-			@Autowired RedissonClient redissonClient, @Autowired MongoClient client) {
+			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
+			@Autowired Dispatcher dispatcher) {
 		this.collectionName = StrUtils.toSnakeCase(dataClass.getSimpleName());
+		this.codecs = codecs;
 		this.dataClass = dataClass;
 		this.idClass = idClass;
 		this.db = client.getDatabase("flow");
@@ -55,22 +78,59 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 		this.toDocument = (obj) -> MongoSerializer.transform(obj, dataClass);
 		this.fromDocument = (doc) -> {
-			var initial = MongoSerializer.from(doc, dataClass);
-			try {
-				var proxy = ProxyMongoObject.createProxy(initial, (fieldData) -> {
-					throw new UnsupportedOperationException("Field update topic publish is not implemented");
-				});
-				return (T) proxy;
-			} catch (Exception e) {
-				throw new RuntimeException(e);
-			}
+			return (T) MongoSerializer.from(doc, dataClass);
+		};
+
+		this.fieldUpdater = (fieldData) -> {
+			dispatcher.submit(() -> {
+				T data = (T) fieldData.instance();
+				Field field = fieldData.field();
+				Object obj = fieldData.newValue();
+				Codec<Object> codec = (Codec<Object>) codecs.getCodecRegistries().get(field.getType());
+				BsonDocument container = new Document().toBsonDocument();
+
+				var writer = new BsonDocumentWriter(container);
+
+				writer.writeStartDocument();
+				writer.writeName(field.getName());
+				codec.encode(writer, obj, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+				writer.writeEndDocument();
+
+				var json = container.toJson();
+				ObjectUpdate update = new ObjectUpdate(this.getId.apply(data).toString(), this.collectionName, field.getName(),
+						json);
+
+				var event = new DataEmitEvent(this, this.dataClass, update);
+				Bukkit.getServer().getPluginManager().callEvent(event);
+
+				this.topic.publish(update);
+			});
 		};
 
 		this.topic = redissonClient.getTopic(this.collectionName);
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
 			var event = new DataUpdateEvent(this, this.dataClass, objectUpdate);
 			Bukkit.getServer().getPluginManager().callEvent(event);
-			throw new UnsupportedOperationException("Field update listener is not implemented");
+
+			for (ID key : this.cachedData.keySet()) {
+				var keyId = key.toString();
+				if (objectUpdate.getObjectId().equalsIgnoreCase(keyId)) {
+					var objectData = this.cachedData.get(key);
+					try {
+						Field field = this.dataClass.getDeclaredField(objectUpdate.getFieldName());
+						var setter = RepositoryFactory.createSetter(dataClass, field);
+						var getter = RepositoryFactory.createGetter(dataClass, field);
+						Document container = Document.parse(objectUpdate.getJsonData());
+						BsonDocumentReader dReader = new BsonDocumentReader(container.toBsonDocument());
+						T object = (T) this.codecs.getCodecRegistries().get(dataClass).decode(dReader,
+								DecoderContext.builder().checkedDiscriminator(true).build());
+						setter.apply(objectData, getter.apply(object));
+					} catch (NoSuchFieldException | SecurityException e) {
+						e.printStackTrace();
+					}
+
+				}
+			}
 		});
 	}
 
@@ -119,15 +179,30 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public Optional<T> findById(ID id) {
+		if (this.cachedData.containsKey(id)) {
+			try {
+				return Optional.of(ProxyMongoObject.createProxy(this.cachedData.get(id), this.fieldUpdater));
+			} catch (Exception e) {
+				throw new RuntimeException(e);
+			}
+		}
+
 		Document document = this.collection.find(Filters.eq("_id", id.toString())).first();
-		return document == null ? Optional.empty() : Optional.of(this.fromDocument.apply(document));
+		if (document == null) {
+			return Optional.empty();
+		}
+		T object = this.fromDocument.apply(document);
+		this.cachedData.put(id, object);
+		try {
+			return Optional.of(ProxyMongoObject.createProxy(object, this.fieldUpdater));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
 	}
 
 	@Override
 	public Iterable<T> findAll() {
-		return StreamSupport.stream(this.collection.find().spliterator(), false)
-			.map(this.fromDocument)
-			.toList();
+		return StreamSupport.stream(this.collection.find().spliterator(), false).map(this.fromDocument).toList();
 	}
 
 	@Override
@@ -138,14 +213,18 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public <S extends T> boolean save(S entity) {
 		var id = getId.apply(entity).toString();
+		Bson filter = Filters.eq("_id", id);
+
 		Document document = toDocument.apply(entity);
 		document.append("_id", id);
-		var result = this.collection.insertOne(document);
+
+		var result = this.collection.updateOne(filter, new Document("$set", document), UPSERT_OPTIONS);
 		return result.wasAcknowledged();
 	}
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
+		// this.collection.updateMany(null, null, UPSERT_OPTIONS)
 		throw new UnsupportedOperationException("not implemented");
 	}
 
@@ -156,7 +235,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public void serverStop(Plugin plugin) {
-
+		saveAll(this.cachedData.values());
 	}
 
 }

@@ -3,9 +3,11 @@ package fr.omny.flow.utils.mongodb;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.UUID;
 
 import org.bson.Document;
 
+import fr.omny.flow.data.Id;
 import fr.omny.flow.data.Val;
 import fr.omny.odi.Utils;
 
@@ -65,6 +67,13 @@ public class MongoSerializer {
 						field.set(instance, document.get(field.getName(), Float.class).floatValue());
 					} else {
 						field.set(instance, document.get(field.getName(), field.getType()));
+					}
+				} else if (field.isAnnotationPresent(Id.class)) {
+					field.setAccessible(true);
+					if(field.getType() == UUID.class){
+						field.set(instance, UUID.fromString(document.get("_id", String.class)));
+					}else{
+						field.set(instance, document.get("_id", field.getType()));
 					}
 				}
 			}
