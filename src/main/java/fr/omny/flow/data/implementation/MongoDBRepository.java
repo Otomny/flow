@@ -57,7 +57,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	private MongoCollection<Document> collection;
 	private Map<ID, T> cachedData = new HashMap<>();
 	private String collectionName;
-	@Autowired
 	private Dispatcher dispatcher;
 
 	// Mapping function
@@ -79,12 +78,13 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
 			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
-			@Autowired Dispatcher dispatcher) {
+			@Autowired Dispatcher dispatcher, @Autowired("databaseName") String dbName) {
+		this.dispatcher = dispatcher;
 		this.collectionName = StrUtils.toSnakeCase(dataClass.getSimpleName());
 		this.codecs = codecs;
 		this.dataClass = dataClass;
 		this.idClass = idClass;
-		this.db = client.getDatabase("flow");
+		this.db = client.getDatabase(dbName);
 		this.collection = db.getCollection(this.collectionName);
 		this.getId = mappingFunction;
 
@@ -114,7 +114,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 				var event = new DataEmitEvent(this, this.dataClass, update);
 				Bukkit.getServer().getPluginManager().callEvent(event);
-				if(!event.isCancelled()){
+				if (!event.isCancelled()) {
 					this.updating.add(id);
 					this.topic.publish(update);
 				}
@@ -229,6 +229,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	}
 
 	@Override
+	public CompletableFuture<Optional<T>> findByIdAsync(ID id) {
+		return this.dispatcher.submit(() -> findById(id));
+	}
+
+	@Override
 	public Iterable<T> findAll() {
 		return StreamSupport.stream(this.collection.find().spliterator(), false).map(this.fromDocument).toList();
 	}
@@ -251,6 +256,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	}
 
 	@Override
+	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
+		return this.dispatcher.submit(() -> this.save(entity));
+	}
+
+	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		entities.forEach(this::save);
 		return true;
@@ -264,11 +274,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public void serverStop(Plugin plugin) {
 		saveAll(this.cachedData.values());
-	}
-
-	@Override
-	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
-		return this.dispatcher.submit(() -> this.save(entity));
 	}
 
 }

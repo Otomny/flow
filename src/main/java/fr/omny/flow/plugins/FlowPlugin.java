@@ -14,6 +14,8 @@ import org.bukkit.command.CommandMap;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import com.google.common.base.Predicates;
+
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.config.ConfigApplier;
@@ -116,7 +118,6 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));
 
-		
 	}
 
 	@Override

@@ -68,6 +68,14 @@ public sealed interface CrudRepository<T, ID> permits RedisRepository, MongoRepo
 	Optional<T> findById(ID id);
 
 	/**
+	 * Find an entity by it's ID in asynchronous mode
+	 * 
+	 * @param id
+	 * @return
+	 */
+	CompletableFuture<Optional<T>> findByIdAsync(ID id);
+
+	/**
 	 * Get all entities
 	 * 
 	 * @return

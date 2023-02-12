@@ -30,11 +30,11 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 					boolean exists = this.configFile.contains(pathToConfigValue);
 					var currentValue = field.get(instance);
 					if (field.getType() == Optional.class) {
-						Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
-								+ "' for field '" + field.getName() + "' of class '" + klass.getCanonicalName() + "'"));
 						if (exists) {
 							field.set(instance, Optional.ofNullable(this.configFile.get(pathToConfigValue, currentValue)));
 						} else {
+							Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
+								+ "' for field '" + field.getName() + "' of class '" + klass.getCanonicalName() + "'"));
 							field.set(instance, Optional.empty());
 						}
 					} else {

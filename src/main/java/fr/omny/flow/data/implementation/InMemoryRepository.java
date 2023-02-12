@@ -64,6 +64,11 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 	}
 
 	@Override
+	public CompletableFuture<Optional<T>> findByIdAsync(ID id) {
+		throw new UnsupportedOperationException("findByIdAsync is not implemented");
+	}
+
+	@Override
 	public Iterable<T> findAll() {
 		return this.data.values();
 	}

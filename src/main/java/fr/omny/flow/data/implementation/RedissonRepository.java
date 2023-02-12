@@ -70,6 +70,12 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 	}
 
 	@Override
+	public CompletableFuture<Optional<T>> findByIdAsync(ID id) {
+		throw new UnsupportedOperationException("findByIdAsync is not implemented");
+	}
+
+
+	@Override
 	public Iterable<T> findAll() {
 		throw new UnsupportedOperationException("Find all is not implemented");
 	}

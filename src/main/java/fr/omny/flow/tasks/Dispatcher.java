@@ -9,9 +9,6 @@ import java.util.function.Supplier;
 import fr.omny.odi.Component;
 
 @Component
-/**
- * 
- */
 public class Dispatcher {
 
 	private ExecutorService executor;
