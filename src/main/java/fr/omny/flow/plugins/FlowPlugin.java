@@ -121,7 +121,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 
 	@Override
 	public void onDisable() {
-		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
+		Injector.findEach(ServerInfo.class::isAssignableFrom).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStop(this));
 		serverStop(this);
 	}
