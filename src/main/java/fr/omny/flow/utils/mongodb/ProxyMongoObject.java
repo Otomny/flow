@@ -12,6 +12,15 @@ import fr.omny.flow.utils.Objects;
 @SuppressWarnings("unchecked")
 public class ProxyMongoObject<T> implements InvocationHandler {
 
+	public static <T> T createProxySilent(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
+		try {
+			return (T) GenericProxyFactory.newProxyInstance(originalInstance.getClass(),
+					new ProxyMongoObject<T>(originalInstance, fieldUpdate));
+		} catch (Exception e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	public static <T> T createProxy(T originalInstance, Consumer<FieldData<T>> fieldUpdate) throws Exception {
 		return (T) GenericProxyFactory.newProxyInstance(originalInstance.getClass(),
 				new ProxyMongoObject<T>(originalInstance, fieldUpdate));

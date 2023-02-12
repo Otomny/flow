@@ -11,7 +11,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.StreamSupport;
 
 import org.bson.BsonDocument;
 import org.bson.BsonDocumentReader;
@@ -121,7 +120,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 			});
 		};
 
-		this.topic = redissonClient.getTopic("repository_"+this.collectionName);
+		this.topic = redissonClient.getTopic("repository_" + this.collectionName);
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
 			var event = new KnownDataUpdateEvent(this, this.dataClass, objectUpdate);
 			Bukkit.getServer().getPluginManager().callEvent(event);
@@ -235,12 +234,38 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public Iterable<T> findAll() {
-		return StreamSupport.stream(this.collection.find().spliterator(), false).map(this.fromDocument).toList();
+		List<T> availableObjets = new ArrayList<>();
+		var entitiesFound = this.collection.find();
+
+		for (Document document : entitiesFound) {
+			T object = this.fromDocument.apply(document);
+			var id = this.getId.apply(object);
+			this.cachedData.put(id, object);
+			availableObjets.add(object);
+		}
+		return availableObjets;
 	}
 
 	@Override
 	public Iterable<T> findAllById(Iterable<ID> ids) {
-		throw new UnsupportedOperationException("not implemented");
+		List<T> availableObjets = new ArrayList<>();
+		List<ID> notFoundInCache = new ArrayList<>();
+		for (ID id : ids) {
+			if (this.cachedData.containsKey(id)) {
+				availableObjets.add(ProxyMongoObject.createProxySilent(this.cachedData.get(id), this.fieldUpdater));
+			} else {
+				notFoundInCache.add(id);
+			}
+		}
+		var entitiesFound = this.collection.find(Filters.in("_id", notFoundInCache.stream().map(ID::toString).toList()));
+
+		for (Document document : entitiesFound) {
+			T object = this.fromDocument.apply(document);
+			var id = this.getId.apply(object);
+			this.cachedData.put(id, object);
+			availableObjets.add(ProxyMongoObject.createProxySilent(object, this.fieldUpdater));
+		}
+		return availableObjets;
 	}
 
 	@Override
@@ -262,7 +287,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
-		entities.forEach(this::save);
+		// this.collection
 		return true;
 	}
 

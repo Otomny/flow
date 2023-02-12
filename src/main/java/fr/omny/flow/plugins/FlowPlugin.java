@@ -15,8 +15,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.redisson.api.RedissonClient;
 
-import com.google.common.base.Predicates;
-
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.config.ConfigApplier;
