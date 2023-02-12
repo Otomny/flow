@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -30,7 +31,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.Projections;
-import com.mongodb.client.model.UpdateOptions;
+import com.mongodb.client.model.ReplaceOptions;
 
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.data.MongoRepository;
@@ -48,7 +49,7 @@ import fr.omny.odi.Autowired;
 
 public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerInfo {
 
-	public static final UpdateOptions UPSERT_OPTIONS = new UpdateOptions().upsert(true);
+	public static final ReplaceOptions UPSERT_OPTIONS = new ReplaceOptions().upsert(true);
 
 	private Class<?> dataClass;
 	private Class<?> idClass;
@@ -56,6 +57,8 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	private MongoCollection<Document> collection;
 	private Map<ID, T> cachedData = new HashMap<>();
 	private String collectionName;
+	@Autowired
+	private Dispatcher dispatcher;
 
 	// Mapping function
 	private Function<T, ID> getId;
@@ -235,20 +238,20 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public <S extends T> boolean save(S entity) {
-		var id = getId.apply(entity).toString();
-		Bson filter = Filters.eq("_id", id);
+		var id = this.getId.apply(entity);
+		var idToString = id.toString();
+		Bson filter = Filters.eq("_id", idToString);
 
 		Document document = toDocument.apply(entity);
-		document.append("_id", id);
-
-		var result = this.collection.updateOne(filter, new Document("$set", document), UPSERT_OPTIONS);
+		document.append("_id", idToString);
+		var result = this.collection.replaceOne(filter, document, UPSERT_OPTIONS);
 		return result.wasAcknowledged();
 	}
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		entities.forEach(this::save);
-		throw new UnsupportedOperationException("not implemented");
+		return true;
 	}
 
 	@Override
@@ -259,6 +262,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public void serverStop(Plugin plugin) {
 		saveAll(this.cachedData.values());
+	}
+
+	@Override
+	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
+		return this.dispatcher.submit(() -> this.save(entity));
 	}
 
 }

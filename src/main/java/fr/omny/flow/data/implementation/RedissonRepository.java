@@ -2,6 +2,7 @@ package fr.omny.flow.data.implementation;
 
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 
 import org.redisson.api.RLiveObjectService;
@@ -23,7 +24,7 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 		this.idClass = idClass;
 		this.redisService = client.getLiveObjectService();
 		this.mappingFunction = mappingFunction;
-		
+
 	}
 
 	@Override
@@ -87,6 +88,11 @@ public final class RedissonRepository<T, ID> implements RedisRepository<T, ID> {
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		throw new UnsupportedOperationException("Save all is not implemented");
+	}
+
+	@Override
+	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
+		throw new UnsupportedOperationException("Save async is not implemented");
 	}
 
 }

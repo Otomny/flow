@@ -3,6 +3,7 @@ package fr.omny.flow.data.implementation;
 
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -81,6 +82,11 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
 		throw new UnsupportedOperationException("Save all is not implemented");
+	}
+
+	@Override
+	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
+		throw new UnsupportedOperationException("Save async is not implemented");
 	}
 
 }

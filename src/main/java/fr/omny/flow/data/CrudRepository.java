@@ -2,14 +2,11 @@ package fr.omny.flow.data;
 
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 /**
- * Repository of Entities
- * 
- * Each get statement returns a Proxy object
- * (find, findAll, etc...)
- * 
- * SuppressWarnings rawtypes because it's typename, and typename doesn't contains generic identifiers
+ * Repository of Entities Each get statement returns a Proxy object (find, findAll, etc...) SuppressWarnings rawtypes
+ * because it's typename, and typename doesn't contains generic identifiers
  */
 @SuppressWarnings("rawtypes")
 public sealed interface CrudRepository<T, ID> permits RedisRepository, MongoRepository, JavaRepository {
@@ -93,6 +90,15 @@ public sealed interface CrudRepository<T, ID> permits RedisRepository, MongoRepo
 	 * @return
 	 */
 	<S extends T> boolean save(S entity);
+
+	/**
+	 * Save an entity to a database in asynchronous mode
+	 * 
+	 * @param <S>
+	 * @param entity
+	 * @return
+	 */
+	<S extends T> CompletableFuture<Boolean> saveAsync(S entity);
 
 	/**
 	 * Save all entites to a database

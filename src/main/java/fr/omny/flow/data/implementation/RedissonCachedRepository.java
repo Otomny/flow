@@ -4,6 +4,7 @@ package fr.omny.flow.data.implementation;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import org.bukkit.plugin.Plugin;
 import org.redisson.api.RLiveObjectService;
@@ -102,6 +103,11 @@ public class RedissonCachedRepository<T, ID> implements RedisRepository<T, ID>, 
 	@Override
 	public void serverStop(Plugin plugin) {
 		throw new UnsupportedOperationException("Save to redis is not implemented");
+	}
+
+	@Override
+	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
+		throw new UnsupportedOperationException("Save async is not implemented");
 	}
 
 }
