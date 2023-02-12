@@ -21,7 +21,8 @@ public class ConfigWiringTest {
 
 	@Test
 	public void wireConfig() {
-		var config = new DummyFileConfiguration(Map.of("name", "Hello world", "nested.key.of.interesting.data", 69420));
+		var config = new DummyFileConfiguration(
+				Map.of("name", "Hello world", "nested.key.of.interesting.data", 69420, "im.here", "John Doe"));
 		Injector.startTest();
 		Injector.registerWireListener(new ConfigApplier(config));
 
@@ -33,6 +34,9 @@ public class ConfigWiringTest {
 		assertEquals(69420, service.getData());
 
 		assertTrue(service.getDbName().isEmpty());
+
+		assertTrue(service.getWorldName().isPresent());
+		assertEquals("John Doe", service.getWorldName().get());
 
 		Injector.wipeTest();
 	}
@@ -49,6 +53,8 @@ public class ConfigWiringTest {
 		@Config("no.one")
 		private Optional<String> dbName;
 
+		@Config("im.here")
+		private Optional<String> worldName;
 
 	}
 
