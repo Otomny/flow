@@ -114,8 +114,10 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 				var event = new DataEmitEvent(this, this.dataClass, update);
 				Bukkit.getServer().getPluginManager().callEvent(event);
-				this.updating.add(id);
-				this.topic.publish(update);
+				if(!event.isCancelled()){
+					this.updating.add(id);
+					this.topic.publish(update);
+				}
 			});
 		};
 

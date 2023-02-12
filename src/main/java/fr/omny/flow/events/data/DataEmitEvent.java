@@ -1,14 +1,16 @@
 package fr.omny.flow.events.data;
 
+import org.bukkit.event.Cancellable;
 import org.bukkit.event.Event;
 import org.bukkit.event.HandlerList;
 
 import fr.omny.flow.data.CrudRepository;
 import fr.omny.flow.data.ObjectUpdate;
 import lombok.Getter;
+import lombok.Setter;
 
 @Getter
-public class DataEmitEvent extends Event {
+public class DataEmitEvent extends Event implements Cancellable{
 
 	public static final HandlerList HANDLER_LIST = new HandlerList();
 
@@ -22,6 +24,8 @@ public class DataEmitEvent extends Event {
 	private CrudRepository<?, ?> repository;
 	private Class<?> dataClass;
 	private ObjectUpdate update;
+	@Setter
+	private boolean cancelled;
 
 	/**
 	 * @param repository
@@ -38,6 +42,8 @@ public class DataEmitEvent extends Event {
 	public HandlerList getHandlers() {
 		return HANDLER_LIST;
 	}
+
+	
 
 }
 
