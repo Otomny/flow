@@ -4,8 +4,10 @@ package fr.omny.flow;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.junit.Test;
 
@@ -30,6 +32,8 @@ public class ConfigWiringTest {
 		assertEquals("Hello world", service.getName());
 		assertEquals(69420, service.getData());
 
+		assertTrue(service.getDbName().isEmpty());
+
 		Injector.wipeTest();
 	}
 
@@ -41,6 +45,9 @@ public class ConfigWiringTest {
 
 		@Config("nested.key.of.interesting.data")
 		private int data;
+
+		@Config("no.one")
+		private Optional<String> dbName;
 
 
 	}
