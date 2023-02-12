@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.command.CommandMap;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.redisson.api.RedissonClient;
 
 import com.google.common.base.Predicates;
 
@@ -20,8 +21,10 @@ import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.CrudRepository;
+import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.data.Repository;
 import fr.omny.flow.data.RepositoryFactory;
+import fr.omny.flow.events.data.DataUpdateEvent;
 import fr.omny.guis.OGui;
 import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
@@ -114,6 +117,13 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				e.printStackTrace();
 			}
 		});
+		var redissonClient = Injector.getService(RedissonClient.class);
+		if (redissonClient != null) {
+			redissonClient.getPatternTopic("repository_*").addListener(ObjectUpdate.class, (pattern, channel, msg) -> {
+				var event = new DataUpdateEvent(pattern.toString(), channel.toString(), msg);
+				getServer().getPluginManager().callEvent(event);
+			});
+		}
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));

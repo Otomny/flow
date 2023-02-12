@@ -38,7 +38,7 @@ import fr.omny.flow.data.MongoRepository;
 import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.flow.events.data.DataEmitEvent;
-import fr.omny.flow.events.data.DataUpdateEvent;
+import fr.omny.flow.events.data.KnownDataUpdateEvent;
 import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.StrUtils;
 import fr.omny.flow.utils.mongodb.FlowCodec;
@@ -121,9 +121,9 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 			});
 		};
 
-		this.topic = redissonClient.getTopic(this.collectionName);
+		this.topic = redissonClient.getTopic("repository_"+this.collectionName);
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
-			var event = new DataUpdateEvent(this, this.dataClass, objectUpdate);
+			var event = new KnownDataUpdateEvent(this, this.dataClass, objectUpdate);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 			ID id = null;
 			if (this.idClass == UUID.class) {
