@@ -1,10 +1,10 @@
 package fr.omny.flow.tasks;
 
 
-import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.function.Supplier;
 
 import fr.omny.odi.Component;
 
@@ -35,8 +35,8 @@ public class Dispatcher {
 	 * @param supplier
 	 * @return
 	 */
-	public <T> Future<T> submit(Callable<T> supplier){
-		return this.executor.submit(supplier);
+	public <T> CompletableFuture<T> submit(Supplier<T> supplier){
+		return CompletableFuture.supplyAsync(supplier, this.executor);
 	}
 
 }
