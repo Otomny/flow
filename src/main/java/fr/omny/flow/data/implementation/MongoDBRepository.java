@@ -2,9 +2,12 @@ package fr.omny.flow.data.implementation;
 
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.StreamSupport;
@@ -64,6 +67,12 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	// Codecs
 	private FlowCodec codecs;
 
+	// Synch utils
+	/**
+	 * A set containing object that getting updated
+	 */
+	private List<ID> updating = new ArrayList<>();
+
 	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
 			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
@@ -96,13 +105,13 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 				codec.encode(writer, obj, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
 				writer.writeEndDocument();
 
+				ID id = this.getId.apply(data);
 				var json = container.toJson();
-				ObjectUpdate update = new ObjectUpdate(this.getId.apply(data).toString(), this.collectionName, field.getName(),
-						json);
+				ObjectUpdate update = new ObjectUpdate(id.toString(), this.collectionName, field.getName(), json);
 
 				var event = new DataEmitEvent(this, this.dataClass, update);
 				Bukkit.getServer().getPluginManager().callEvent(event);
-
+				this.updating.add(id);
 				this.topic.publish(update);
 			});
 		};
@@ -111,25 +120,40 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
 			var event = new DataUpdateEvent(this, this.dataClass, objectUpdate);
 			Bukkit.getServer().getPluginManager().callEvent(event);
+			ID id = null;
+			if (this.idClass == UUID.class) {
+				id = (ID) UUID.fromString(objectUpdate.getObjectId());
+			} else if (this.idClass == Long.class) {
+				id = (ID) Long.valueOf(objectUpdate.getObjectId());
+			} else if (this.idClass == String.class) {
+				id = (ID) objectUpdate.getObjectId();
+			} else if (this.idClass == Integer.class) {
+				id = (ID) Integer.valueOf(objectUpdate.getObjectId());
+			}
+			if (id == null) {
+				throw new IllegalStateException("Could not deserialize " + objectUpdate.getObjectId() + " to type " + idClass);
+			}
+			if (!this.cachedData.containsKey(id)) {
+				return;
+			}
 
-			for (ID key : this.cachedData.keySet()) {
-				var keyId = key.toString();
-				if (objectUpdate.getObjectId().equalsIgnoreCase(keyId)) {
-					var objectData = this.cachedData.get(key);
-					try {
-						Field field = this.dataClass.getDeclaredField(objectUpdate.getFieldName());
-						var setter = RepositoryFactory.createSetter(dataClass, field);
-						var getter = RepositoryFactory.createGetter(dataClass, field);
-						Document container = Document.parse(objectUpdate.getJsonData());
-						BsonDocumentReader dReader = new BsonDocumentReader(container.toBsonDocument());
-						T object = (T) this.codecs.getCodecRegistries().get(dataClass).decode(dReader,
-								DecoderContext.builder().checkedDiscriminator(true).build());
-						setter.apply(objectData, getter.apply(object));
-					} catch (NoSuchFieldException | SecurityException e) {
-						e.printStackTrace();
-					}
+			T objectData = this.cachedData.get(dispatcher);
 
-				}
+			if (this.updating.contains(id)) {
+				this.updating.remove(id);
+				return;
+			}
+			try {
+				Field field = this.dataClass.getDeclaredField(objectUpdate.getFieldName());
+				var setter = RepositoryFactory.createSetter(dataClass, field);
+				var getter = RepositoryFactory.createGetter(dataClass, field);
+				Document container = Document.parse(objectUpdate.getJsonData());
+				BsonDocumentReader dReader = new BsonDocumentReader(container.toBsonDocument());
+				T object = (T) this.codecs.getCodecRegistries().get(dataClass).decode(dReader,
+						DecoderContext.builder().checkedDiscriminator(true).build());
+				setter.apply(objectData, getter.apply(object));
+			} catch (NoSuchFieldException | SecurityException e) {
+				e.printStackTrace();
 			}
 		});
 	}
@@ -186,7 +210,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 				throw new RuntimeException(e);
 			}
 		}
-
 		Document document = this.collection.find(Filters.eq("_id", id.toString())).first();
 		if (document == null) {
 			return Optional.empty();
@@ -224,7 +247,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
-		// this.collection.updateMany(null, null, UPSERT_OPTIONS)
+		entities.forEach(this::save);
 		throw new UnsupportedOperationException("not implemented");
 	}
 
