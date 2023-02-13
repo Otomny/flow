@@ -8,12 +8,14 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.configuration.CodecProvider;
 import org.bson.codecs.configuration.CodecRegistries;
 import org.bson.codecs.configuration.CodecRegistry;
+import org.bson.codecs.pojo.PojoCodecProvider;
 
 import com.mongodb.MongoClientSettings;
 
 import fr.omny.flow.utils.mongodb.codecs.ItemStackCodec;
 import fr.omny.flow.utils.mongodb.codecs.LocationCodec;
 import fr.omny.flow.utils.mongodb.codecs.WorldCodec;
+import fr.omny.flow.world.Area;
 import fr.omny.odi.Component;
 
 @Component
@@ -25,6 +27,7 @@ public class FlowCodec {
 	public FlowCodec() {
 		// Initializing
 		this.codecs.addAll(List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec()));
+		registerCodecProvider(PojoCodecProvider.builder().register(Area.class).build());
 	}
 
 	public void registerCodec(Codec<?> codec) {
