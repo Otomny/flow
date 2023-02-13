@@ -75,6 +75,17 @@ public class ItemBuilder {
 	}
 
 	/**
+	 * Set lore of item only if condition is true
+	 * 
+	 * @param condition
+	 * @param texts
+	 * @return
+	 */
+	public ItemBuilder description(boolean condition, List<String> texts) {
+		return condition ? description(texts) : this;
+	}
+
+	/**
 	 * Set lore of item
 	 * 
 	 * @param strings
@@ -82,6 +93,17 @@ public class ItemBuilder {
 	 */
 	public ItemBuilder description(String... strings) {
 		return description(List.of(strings));
+	}
+
+	/**
+	 * Set lore of item only if condition is true
+	 * 
+	 * @param condition
+	 * @param strings
+	 * @return
+	 */
+	public ItemBuilder description(boolean condition, String... strings) {
+		return condition ? description(List.of(strings)) : this;
 	}
 
 	/**
