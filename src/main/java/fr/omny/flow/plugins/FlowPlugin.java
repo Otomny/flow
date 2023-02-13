@@ -87,15 +87,15 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		map.ifPresentOrElse(commandMap -> {
 			commands.forEach(klass -> {
 				try {
-					Cmd cmdInstance = Cmd.class.cast(klass.getConstructor().newInstance());
+					Cmd cmdInstance = (Cmd) Utils.callConstructor(klass);
 					Injector.wire(cmdInstance);
 					commandMap.register(cmdInstance.getName(), "", cmdInstance);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-						| NoSuchMethodException | SecurityException e) {
+						| SecurityException e) {
 					e.printStackTrace();
 				}
 			});
-		}, () -> getLogger().warning("Could not find commandMap"));
+		}, () -> getLogger().warning("Could not find commandMap, unable to auto register commands instances"));
 
 		// Init listeners
 		Predicate<PreClass> listenerFilter = preClass -> preClass.isInterfacePresent(Listener.class)
