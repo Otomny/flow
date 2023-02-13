@@ -2,6 +2,7 @@ package fr.omny.flow.config;
 
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Parameter;
 import java.util.Optional;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -34,7 +35,7 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 							field.set(instance, Optional.ofNullable(this.configFile.get(pathToConfigValue, currentValue)));
 						} else {
 							Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
-								+ "' for field '" + field.getName() + "' of class '" + klass.getCanonicalName() + "'"));
+									+ "' for field '" + field.getName() + "' of class '" + klass.getCanonicalName() + "'"));
 							field.set(instance, Optional.empty());
 						}
 					} else {
@@ -50,6 +51,25 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 	@Override
 	public void wire(Object instance) {
 		newInstance(instance);
+	}
+
+	@Override
+	public Object value(Parameter parameter) {
+		if (!parameter.isAnnotationPresent(Config.class))
+			return null;
+		var annotationData = parameter.getAnnotation(Config.class);
+		var pathToConfigValue = annotationData.value();
+		boolean exists = this.configFile.contains(pathToConfigValue);
+		if (parameter.getType() == Optional.class) {
+			if (exists) {
+				return Optional.ofNullable(this.configFile.get(pathToConfigValue));
+			} else {
+				Injector.getLogger().ifPresent(log -> log
+						.warning("Could not resolve path '" + pathToConfigValue + "' for parameter '" + parameter.getName()));
+				return Optional.empty();
+			}
+		}
+		return this.configFile.get(pathToConfigValue);
 	}
 
 }

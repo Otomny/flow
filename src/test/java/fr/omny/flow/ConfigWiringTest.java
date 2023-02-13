@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 import java.util.Optional;
 
@@ -15,20 +16,22 @@ import fr.omny.flow.config.Config;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.DummyFileConfiguration;
 import fr.omny.odi.Injector;
+import fr.omny.odi.Utils;
 import lombok.Getter;
 
 public class ConfigWiringTest {
 
 	@Test
-	public void wireConfig() {
+	public void wireConfig()
+			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		var config = new DummyFileConfiguration(
 				Map.of("name", "Hello world", "nested.key.of.interesting.data", 69420, "im.here", "John Doe"));
 		Injector.startTest();
-		Injector.registerWireListener(new ConfigApplier(config));
+		var configApplier = new ConfigApplier(config);
+		Injector.registerWireListener(configApplier);
+		Utils.registerCallConstructor(configApplier);
 
-		Service service = new Service();
-		assertNull(service.getName());
-		Injector.wire(service);
+		Service service = Utils.callConstructor(Service.class);
 		assertNotNull(service.getName());
 		assertEquals("Hello world", service.getName());
 		assertEquals(69420, service.getData());
@@ -38,11 +41,15 @@ public class ConfigWiringTest {
 		assertTrue(service.getWorldName().isPresent());
 		assertEquals("John Doe", service.getWorldName().get());
 
+		assertEquals("Hello world", service.getConstructedConfig());
+
 		Injector.wipeTest();
 	}
 
 	@Getter
 	public static class Service {
+
+		private String constructedConfig;
 
 		@Config("name")
 		private String name;
@@ -55,6 +62,13 @@ public class ConfigWiringTest {
 
 		@Config("im.here")
 		private Optional<String> worldName;
+
+		/**
+		 * @param constructedConfig
+		 */
+		public Service(@Config("name") String constructedConfig) {
+			this.constructedConfig = constructedConfig;
+		}
 
 	}
 
