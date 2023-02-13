@@ -5,6 +5,10 @@ package fr.omny.flow.utils.generic;
  */
 public interface Into<T> {
 
+	/**
+	 * 
+	 * @return The required element type
+	 */
 	T transform();
 
 }
