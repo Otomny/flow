@@ -38,6 +38,7 @@ import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.flow.events.data.DataEmitEvent;
 import fr.omny.flow.events.data.KnownDataUpdateEvent;
+import fr.omny.flow.plugins.Env;
 import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.StrUtils;
 import fr.omny.flow.utils.mongodb.FlowCodec;
@@ -69,10 +70,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	private FlowCodec codecs;
 
 	// Synch utils
-	/**
-	 * A set containing object that getting updated
-	 */
-	private List<ID> updating = new ArrayList<>();
 
 	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
@@ -109,12 +106,12 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 				ID id = this.getId.apply(data);
 				var json = container.toJson();
-				ObjectUpdate update = new ObjectUpdate(id.toString(), this.collectionName, field.getName(), json);
+				ObjectUpdate update = new ObjectUpdate(id.toString(), this.collectionName, field.getName(), json,
+						Env.getServerName());
 
 				var event = new DataEmitEvent(this, this.dataClass, update);
 				Bukkit.getServer().getPluginManager().callEvent(event);
 				if (!event.isCancelled()) {
-					this.updating.add(id);
 					this.topic.publish(update);
 				}
 			});
@@ -125,6 +122,10 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 			var event = new KnownDataUpdateEvent(this, this.dataClass, objectUpdate);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 			ID id = null;
+			if (Env.getServerName().equals(objectUpdate.getServerName()))
+				// We are receiving the data of ourself
+				return;
+
 			if (this.idClass == UUID.class) {
 				id = (ID) UUID.fromString(objectUpdate.getObjectId());
 			} else if (this.idClass == Long.class) {
@@ -143,10 +144,6 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 			T objectData = this.cachedData.get(dispatcher);
 
-			if (this.updating.contains(id)) {
-				this.updating.remove(id);
-				return;
-			}
 			try {
 				Field field = this.dataClass.getDeclaredField(objectUpdate.getFieldName());
 				var setter = RepositoryFactory.createSetter(dataClass, field);
