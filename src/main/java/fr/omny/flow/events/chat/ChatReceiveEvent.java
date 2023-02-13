@@ -25,15 +25,14 @@ public class ChatReceiveEvent extends Event {
 	 * @param isAsync
 	 * @param chatMessage
 	 */
-	public ChatReceiveEvent( ChatMessage chatMessage) {
+	public ChatReceiveEvent(ChatMessage chatMessage) {
 		super(true);
 		this.chatMessage = chatMessage;
 	}
 
 	@Override
 	public HandlerList getHandlers() {
-		// TODO Auto-generated method stub
-		return null;
+		return HANDLER_LIST;
 	}
 
 }

@@ -13,40 +13,44 @@ import org.redisson.api.RedissonClient;
 import fr.omny.flow.chat.ChatMessage;
 import fr.omny.flow.chat.ChatTransformer;
 import fr.omny.flow.chat.DefaultChatFormater;
+import fr.omny.flow.config.Config;
 import fr.omny.flow.events.chat.ChatReceiveEvent;
+import fr.omny.flow.listeners.aop.ListenerProvider;
 import fr.omny.flow.plugins.Env;
 import fr.omny.odi.Autowired;
 
-public class ChatListener implements Listener {
+public class ChatListener implements ListenerProvider {
 
-	private RTopic chatTopic;
+	@Config("distributed.enable_broadcast_chat")
+	private boolean enabled;
 
-	@Autowired
-	private Optional<ChatTransformer> chatFormat;
-
-	@Autowired
-	private DefaultChatFormater fallbackChatFormat;
-
-	public ChatListener(@Autowired RedissonClient redissonClient) {
-		this.chatTopic = redissonClient.getTopic("player_chat");
-		this.chatTopic.addListener(ChatMessage.class, (channel, chatMessage) -> {
+	public Listener provideBroadcastChat(@Autowired RedissonClient redissonClient) {
+		RTopic chatTopic = redissonClient.getTopic("player_chat");
+		chatTopic.addListener(ChatMessage.class, (channel, chatMessage) -> {
 			ChatReceiveEvent event = new ChatReceiveEvent(chatMessage);
 			Bukkit.getServer().getPluginManager().callEvent(event);
 		});
-	}
+		// If the server want to 
+		return !enabled ? null : new Listener() {
 
-	@EventHandler
-	public void onChat(AsyncPlayerChatEvent event) {
-		event.setCancelled(true);
-		String fullMessage = chatFormat.orElse(fallbackChatFormat).transform(event);
-		String serverName = Env.getServerName();
-		chatTopic.publish(
-				new ChatMessage(serverName, event.getPlayer().getName(), event.getPlayer().getUniqueId(), fullMessage));
-	}
+			@Autowired Optional<ChatTransformer> chatFormat;
+			@Autowired DefaultChatFormater fallbackChatFormat;
 
-	@EventHandler
-	public void onSubChat(ChatReceiveEvent event){
-		Bukkit.broadcastMessage(event.getChatMessage().getFullMessage());
+			@EventHandler
+			public void onChat(AsyncPlayerChatEvent event) {
+				event.setCancelled(true);
+				String fullMessage = chatFormat.orElse(fallbackChatFormat).transform(event);
+				String serverName = Env.getServerName();
+				chatTopic.publish(
+						new ChatMessage(serverName, event.getPlayer().getName(), event.getPlayer().getUniqueId(), fullMessage));
+			}
+
+			@EventHandler
+			public void onSubChat(ChatReceiveEvent event) {
+				var msg = event.getChatMessage();
+				Bukkit.broadcastMessage(msg.getFullMessage());
+			}
+		};
 	}
 
 }

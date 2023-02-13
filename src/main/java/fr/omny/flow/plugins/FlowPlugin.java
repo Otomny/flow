@@ -2,6 +2,7 @@ package fr.omny.flow.plugins;
 
 
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -23,6 +24,7 @@ import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.data.Repository;
 import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.flow.events.data.DataUpdateEvent;
+import fr.omny.flow.listeners.aop.ListenerProvider;
 import fr.omny.guis.OGui;
 import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
@@ -79,9 +81,9 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 			}
 		}
 		// Init all commands
-		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class);
+		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class) && preClass.isNotInner();
 		List<Class<?>> commands = Stream.concat(Utils.getClasses(packageName, commandsFilter).stream(),
-				Utils.getClasses(getClass().getPackageName(), commandsFilter).stream()).toList();
+				Utils.getClasses("fr.omny.flow", commandsFilter).stream()).toList();
 
 		Optional<CommandMap> map = ReflectionUtils.get(Bukkit.getServer(), "commandMap");
 		map.ifPresentOrElse(commandMap -> {
@@ -99,22 +101,54 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 
 		// Init listeners
 		Predicate<PreClass> listenerFilter = preClass -> preClass.isInterfacePresent(Listener.class)
-				&& !ignorePackages.stream().anyMatch(s -> s.startsWith(preClass.getPackageName()));
+				&& !ignorePackages.stream().anyMatch(s -> s.startsWith(preClass.getPackageName())) && preClass.isNotInner();
 
 		// No duplicate
 		Set<Class<?>> listeners = Stream.concat(Utils.getClasses(packageName, listenerFilter).stream(),
-				Utils.getClasses(getClass().getPackageName(), listenerFilter).stream()).collect(Collectors.toSet());
+				Utils.getClasses("fr.omny.flow", listenerFilter).stream()).collect(Collectors.toSet());
 
 		listeners.forEach(klass -> {
 			try {
-				Listener listenerInstance = Listener.class.cast(klass.getConstructor().newInstance());
-				Injector.wire(listenerInstance);
-				getServer().getPluginManager().registerEvents(listenerInstance, this);
+				Listener listenerInstance = (Listener) Utils.callConstructor(klass);
+				System.out.println(klass);
+				if (listenerInstance != null) {
+					Injector.wire(listenerInstance);
+					getServer().getPluginManager().registerEvents(listenerInstance, this);
+				}
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-					| NoSuchMethodException | SecurityException e) {
+					| SecurityException e) {
 				e.printStackTrace();
 			}
 		});
+
+		Predicate<PreClass> listenerProviderFilter = preClass -> preClass.isInterfacePresent(ListenerProvider.class)
+				&& !ignorePackages.stream().anyMatch(s -> s.startsWith(preClass.getPackageName())) && preClass.isNotInner();
+
+		// Listeners providers
+		Set<Class<?>> listenerProviders = Stream.concat(Utils.getClasses(packageName, listenerProviderFilter).stream(),
+				Utils.getClasses("fr.omny.flow", listenerProviderFilter).stream()).collect(Collectors.toSet());
+
+		listenerProviders.forEach(klass -> {
+			try {
+				ListenerProvider listenerProviderInstance = (ListenerProvider) Utils.callConstructor(klass);
+				Injector.wire(listenerProviderInstance);
+				for (Method method : klass.getDeclaredMethods()) {
+					if (method.getReturnType() == Listener.class) {
+						Listener listenerInstance = (Listener) Utils.callMethod(method, klass, listenerProviderInstance,
+								new Object[] {});
+						if (listenerInstance != null) {
+							Injector.wire(listenerInstance);
+							getServer().getPluginManager().registerEvents(listenerInstance, this);
+						}
+					}
+				}
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException e) {
+				e.printStackTrace();
+			}
+
+		});
+
 		var redissonClient = Injector.getService(RedissonClient.class);
 		if (redissonClient != null) {
 			redissonClient.getPatternTopic("repository_*").addListener(ObjectUpdate.class, (pattern, channel, msg) -> {
