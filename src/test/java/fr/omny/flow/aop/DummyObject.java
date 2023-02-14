@@ -14,4 +14,8 @@ public class DummyObject {
 
 	DummyObject(){}
 
+	public void selfInvoke(String newWorld){
+		setWorld(newWorld);
+	}
+
 }

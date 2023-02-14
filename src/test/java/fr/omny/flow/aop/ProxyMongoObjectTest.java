@@ -1,7 +1,10 @@
 package fr.omny.flow.aop;
 
-import static org.junit.Assert.assertEquals;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.bson.Document;
@@ -11,9 +14,9 @@ import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
 
 public class ProxyMongoObjectTest {
-	
+
 	@Test
-	public void test_Proxy_Setter() throws Exception{
+	public void test_Proxy_Setter() throws Exception {
 		DummyObject originalObject = new DummyObject();
 		AtomicReference<String> worldReference = new AtomicReference<>();
 		AtomicReference<String> oldWorldReference = new AtomicReference<>();
@@ -39,12 +42,26 @@ public class ProxyMongoObjectTest {
 		DummyObject originalObject = new DummyObject();
 		originalObject.setWorld("Man I Can't");
 		assertEquals("Man I Can't", originalObject.getWorld());
-		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {});
+		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {
+		});
 		Document documentObj = MongoSerializer.transform(proxiedObject, DummyObject.class);
 		assertEquals("Man I Can't", documentObj.getString("world"));
-
 	}
 
-	
+	@Test
+	public void test_selfInvoke_Setter() throws Exception {
+		DummyObject originalObject = new DummyObject();
+
+		AtomicBoolean hasBeenChanged = new AtomicBoolean(false);
+
+		originalObject.setWorld("Man I Can't");
+		assertEquals("Man I Can't", originalObject.getWorld());
+		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {
+			hasBeenChanged.set(true);
+		});
+		proxiedObject.selfInvoke("Hello world");
+		assertEquals("Hello world", proxiedObject.getWorld());
+		assertTrue(hasBeenChanged.get());
+	}
 
 }

@@ -4,6 +4,10 @@ package fr.omny.flow.utils.mongodb;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Consumer;
 
 import fr.omny.flow.aop.GenericProxyFactory;
@@ -31,11 +35,17 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 	private T instance;
 	private Class<? extends T> klass;
 	private Consumer<FieldData<T>> fieldUpdate;
+	private List<Field> fields = new ArrayList<>();
+
 
 	private ProxyMongoObject(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
 		this.instance = originalInstance;
 		this.fieldUpdate = fieldUpdate;
 		this.klass = (Class<? extends T>) this.instance.getClass();
+		for(Field field : this.klass.getDeclaredFields()){
+			field.setAccessible(true);
+			fields.add(field);
+		}
 	}
 
 	@Override
@@ -56,8 +66,28 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 			field.setAccessible(true);
 			this.fieldUpdate.accept(new FieldData<T>(this.instance, field, field.get(this.instance), arguments[0]));
 		}
-
-		return remoteMethod.invoke(this.instance, arguments);
+		if(Objects.isSetter(method) || Objects.isGetter(method)){
+			return remoteMethod.invoke(this.instance, arguments);
+		}else{
+			Map<Field, Integer> hashCodes = new HashMap<>();
+			this.fields.forEach(f -> {
+				try {
+					hashCodes.put(f, java.util.Objects.hashCode(f.get(this.instance)));
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			});
+			Object result = remoteMethod.invoke(this.instance, arguments);
+			for(Field field : this.fields){
+				var currentValue = field.get(this.instance);
+				int oldHashCode = hashCodes.get(field);
+				int currentHashCode = java.util.Objects.hashCode(currentValue);
+				if(oldHashCode != currentHashCode){
+					this.fieldUpdate.accept(new FieldData<T>(this.instance, field, null, currentValue));
+				}
+			}
+			return result;
+		}
 	}
 
 }
