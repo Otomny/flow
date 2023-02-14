@@ -25,6 +25,7 @@ import fr.omny.flow.data.Repository;
 import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.flow.events.data.DataUpdateEvent;
 import fr.omny.flow.listeners.aop.ListenerProvider;
+import fr.omny.flow.tasks.RunnableConfig;
 import fr.omny.guis.OGui;
 import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
@@ -110,7 +111,6 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		listeners.forEach(klass -> {
 			try {
 				Listener listenerInstance = (Listener) Utils.callConstructor(klass);
-				System.out.println(klass);
 				if (listenerInstance != null) {
 					Injector.wire(listenerInstance);
 					getServer().getPluginManager().registerEvents(listenerInstance, this);
@@ -147,6 +147,44 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				e.printStackTrace();
 			}
 
+		});
+		Predicate<PreClass> runnablePredicate = preClass -> preClass.isNotInner()
+				&& preClass.isInterfacePresent(Runnable.class) && preClass.isAnnotationPresent(RunnableConfig.class);
+
+		Set<Class<?>> runnableClasses = Stream.concat(Utils.getClasses(packageName, runnablePredicate).stream(),
+				Utils.getClasses("fr.omny.flow", runnablePredicate).stream()).collect(Collectors.toSet());
+
+		runnableClasses.forEach(klass -> {
+			try {
+				var bukkitConfig = klass.getAnnotation(RunnableConfig.class);
+				var name = bukkitConfig.value();
+				long period = bukkitConfig.period();
+				long delay = bukkitConfig.delay();
+				var isAsync = bukkitConfig.async();
+				var isPeriodic = period != 0L;
+				var scheduler = Bukkit.getServer().getScheduler();
+				var bukkitRunnable = (Runnable) Utils.callConstructor(klass);
+
+				Injector.wire(bukkitRunnable);
+				Injector.addService(klass, name, bukkitRunnable);
+
+				if (isAsync) {
+					if (isPeriodic) {
+						scheduler.runTaskTimerAsynchronously(this, bukkitRunnable, delay, period);
+					} else {
+						scheduler.runTaskLaterAsynchronously(this, bukkitRunnable, delay);
+					}
+				} else {
+					if (isPeriodic) {
+						scheduler.runTaskTimer(this, bukkitRunnable, delay, period);
+					} else {
+						scheduler.runTaskLater(this, bukkitRunnable, delay);
+					}
+				}
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+					| SecurityException e) {
+				e.printStackTrace();
+			}
 		});
 
 		var redissonClient = Injector.getService(RedissonClient.class);
