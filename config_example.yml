@@ -1,0 +1,18 @@
+# Configuration can be use directly in classes using annotation @Config(name)
+# Configuration set for databases access
+db:
+  redis:
+    # URI for the redis server
+    uri: redis://127.0.0.1:6379
+  mongodb:
+    # URI for the mongodb server
+    # Not supporting replica for the moment
+    uri: undefined
+# Configuration for distributed things
+distributed:
+  # Global thread config
+  thread_config:
+    # Thread pool size for the dispatcher
+    thread_pool_size: 4
+  # use redis pub/sub to publish and receive chat messages
+  enable_broadcast_chat: true
