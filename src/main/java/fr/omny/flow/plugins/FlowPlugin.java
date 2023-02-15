@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -25,7 +26,10 @@ import fr.omny.flow.data.Repository;
 import fr.omny.flow.data.RepositoryFactory;
 import fr.omny.flow.events.data.DataUpdateEvent;
 import fr.omny.flow.listeners.aop.ListenerProvider;
+import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.tasks.RunnableConfig;
+import fr.omny.flow.tasks.SchedulerType;
+import fr.omny.flow.utils.Converter;
 import fr.omny.guis.OGui;
 import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
@@ -161,6 +165,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				long period = bukkitConfig.period();
 				long delay = bukkitConfig.delay();
 				var isAsync = bukkitConfig.async();
+				var type = bukkitConfig.type();
 				var isPeriodic = period != 0L;
 				var scheduler = Bukkit.getServer().getScheduler();
 				var bukkitRunnable = (Runnable) Utils.callConstructor(klass);
@@ -168,19 +173,31 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				Injector.wire(bukkitRunnable);
 				Injector.addService(klass, name, bukkitRunnable);
 
-				if (isAsync) {
-					if (isPeriodic) {
-						scheduler.runTaskTimerAsynchronously(this, bukkitRunnable, delay, period);
+				if (type == SchedulerType.BUKKIT) {
+					if (isAsync) {
+						if (isPeriodic) {
+							scheduler.runTaskTimerAsynchronously(this, bukkitRunnable, delay, period);
+						} else {
+							scheduler.runTaskLaterAsynchronously(this, bukkitRunnable, delay);
+						}
 					} else {
-						scheduler.runTaskLaterAsynchronously(this, bukkitRunnable, delay);
+						if (isPeriodic) {
+							scheduler.runTaskTimer(this, bukkitRunnable, delay, period);
+						} else {
+							scheduler.runTaskLater(this, bukkitRunnable, delay);
+						}
 					}
-				} else {
+				} else if (type == SchedulerType.FLOW) {
+					Dispatcher dispatcher = Injector.getService(Dispatcher.class);
+					long periodAsMillis = Converter.tickToMillis(period);
+					long delayAsMillis = Converter.tickToMillis(delay);
 					if (isPeriodic) {
-						scheduler.runTaskTimer(this, bukkitRunnable, delay, period);
+						dispatcher.submitFixedRate(bukkitRunnable, delayAsMillis, periodAsMillis, TimeUnit.MILLISECONDS);
 					} else {
-						scheduler.runTaskLater(this, bukkitRunnable, delay);
+						dispatcher.submit(bukkitRunnable, delayAsMillis, TimeUnit.MILLISECONDS);
 					}
 				}
+
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| SecurityException e) {
 				e.printStackTrace();

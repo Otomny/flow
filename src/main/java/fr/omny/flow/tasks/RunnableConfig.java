@@ -41,4 +41,16 @@ public @interface RunnableConfig {
 	 */
 	boolean async() default false;
 
+	/**
+	 * <p>
+	 * The type of scheduler use to run the runnable default is Bukkit
+	 * </p>
+	 * <p>
+	 * <strong>BE CAREFUL</strong> while using FLOW scheduler type, it's always running in async
+	 * </p>
+	 * 
+	 * @return Type of scheduling
+	 */
+	SchedulerType type() default SchedulerType.BUKKIT;
+
 }
