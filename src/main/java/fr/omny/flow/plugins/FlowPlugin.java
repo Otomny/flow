@@ -75,6 +75,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		for (Class<?> classRegisterImpl : classes) {
 			try {
 				ClassRegister classRegister = (ClassRegister) Utils.callConstructor(classRegisterImpl);
+				Utils.autowire(classRegister);
 				classRegister.register(this);
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
