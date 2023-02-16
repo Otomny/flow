@@ -14,6 +14,7 @@ import java.util.stream.Stream;
 import fr.omny.flow.aop.ClassRegister;
 import fr.omny.flow.plugins.FlowPlugin;
 import fr.omny.odi.Autowired;
+import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
 import fr.omny.odi.utils.PreClass;
 
@@ -41,6 +42,7 @@ public class PlaceholderClassRegister implements ClassRegister {
 						method.setAccessible(true);
 						Placeholder placeholder = (Placeholder) Utils.callMethod(method, placeholderProviderClass, instance,
 								new Object[] {});
+						Injector.wire(placeholder);
 						this.placeholders.registerPlaceholder(placeholder);
 					} else if (Collection.class.isAssignableFrom(method.getReturnType())) {
 						method.setAccessible(true);
@@ -54,7 +56,7 @@ public class PlaceholderClassRegister implements ClassRegister {
 									@SuppressWarnings("unchecked")
 									Collection<Placeholder> placeholder = (Collection<Placeholder>) Utils.callMethod(method,
 											placeholderProviderClass, instance, new Object[] {});
-									placeholder.forEach(this.placeholders::registerPlaceholder);
+									placeholder.stream().peek(Injector::wire).forEach(this.placeholders::registerPlaceholder);
 								}
 							}
 						}
