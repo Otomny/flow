@@ -1,16 +1,16 @@
 package fr.omny.flow.command;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.bukkit.command.CommandSender;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.commands.SubCmd;
@@ -24,12 +24,12 @@ public class SubCommandTest {
 
 	public static boolean SUBCOMMAND_ARGUMENT_OPTIONAL = false;
 
-	@Before
+	@BeforeEach
 	public void setupForEach() {
 		Injector.startTest();
 	}
 
-	@After
+	@AfterEach
 	public void tearDownForEach() {
 		Injector.wipeTest();
 	}
@@ -47,7 +47,7 @@ public class SubCommandTest {
 	public void test_ExecuteCommand_NoArguments_Optional() {
 		var sender = new DummyCommandSender();
 		var cmd = new DummyCommand(true);
-		var result = cmd.execute(sender, "dummy", new String[] { });
+		var result = cmd.execute(sender, "dummy", new String[] {});
 		assertTrue(result);
 		assertNotNull(cmd.args);
 	}
@@ -81,7 +81,8 @@ public class SubCommandTest {
 		SUBCOMMAND_ARGUMENT_OPTIONAL = true;
 		var sender = new DummyCommandSender();
 		var cmd = new DummyCommand(false);
-		var result = cmd.execute(sender, "dummy", new String[] {"setdummy"});
+		var result = cmd.execute(sender, "dummy", new String[] {
+				"setdummy" });
 		assertTrue(result);
 		assertNull(cmd.args);
 		assertNotNull(cmd.getSubCmd().args);
@@ -98,7 +99,7 @@ public class SubCommandTest {
 
 		public DummyCommand(boolean subCmdOptional) {
 			super("dummy");
-			var subCmd =  new DummySubCommand(subCmdOptional);
+			var subCmd = new DummySubCommand(subCmdOptional);
 			rc(0, subCmd);
 			this.subCmd = subCmd;
 		}

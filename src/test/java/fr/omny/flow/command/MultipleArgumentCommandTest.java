@@ -1,15 +1,15 @@
 package fr.omny.flow.command;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.commands.arguments.DoubleArgument;
@@ -23,12 +23,12 @@ import lombok.Getter;
 
 public class MultipleArgumentCommandTest {
 
-	@Before
+	@BeforeEach
 	public void setupForEach() {
 		Injector.startTest();
 	}
 
-	@After
+	@AfterEach
 	public void tearDownForEach() {
 		Injector.wipeTest();
 	}

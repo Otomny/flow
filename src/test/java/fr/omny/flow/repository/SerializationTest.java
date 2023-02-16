@@ -1,7 +1,8 @@
 package fr.omny.flow.repository;
 
 
-import static org.junit.Assert.assertEquals;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.util.List;
 
@@ -12,7 +13,7 @@ import org.bson.codecs.Codec;
 import org.bson.codecs.EncoderContext;
 import org.bson.codecs.pojo.PojoCodecProvider;
 import org.bson.codecs.pojo.annotations.BsonProperty;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import fr.omny.flow.utils.mongodb.FlowCodec;
 import lombok.Getter;

@@ -1,14 +1,15 @@
 package fr.omny.flow.aop;
 
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.bson.Document;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
