@@ -9,8 +9,8 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import fr.omny.flow.placeholders.Placeholder;
 import fr.omny.flow.placeholders.Placeholders;
+import fr.omny.flow.placeholders.content.PlayerBasedPlaceholder;
 import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
 
@@ -30,7 +30,7 @@ public class PlaceHolderTest {
 	public void testPlaceholder()
 			throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Placeholders placeholders = Utils.callConstructor(Placeholders.class);
-		placeholders.registerPlaceholder(new Placeholder("hello", p -> "Hello"));
+		placeholders.registerPlaceholder(new PlayerBasedPlaceholder("hello", p -> "Hello"));
 
 		String text = "%hello% World";
 		String result = placeholders.inject(text, null);

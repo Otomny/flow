@@ -11,9 +11,10 @@ import lombok.Setter;
 @Getter
 @Setter
 @AllArgsConstructor
-public class Placeholder {
+public abstract class Placeholder {
 	
 	private String name;
-	private Function<Player, String> applier;
+
+	public abstract String apply(Player player);
 
 }

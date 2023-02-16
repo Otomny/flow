@@ -28,7 +28,7 @@ public class Placeholders {
 			if (!this.placeholders.containsKey(foundPattern)) {
 				throw new IllegalStateException("No placeholder found with key " + foundPattern + ".");
 			}
-			return this.placeholders.get(foundPattern).getApplier().apply(player);
+			return this.placeholders.get(foundPattern).apply(player);
 		});
 	}
 }
