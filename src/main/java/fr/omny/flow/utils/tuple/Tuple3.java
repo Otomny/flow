@@ -13,6 +13,17 @@ public class Tuple3<U, V, W> {
 	private V second;
 	private W third;
 
+	public U getX(){
+		return this.first;
+	}
+
+	public V getY(){
+		return this.second;
+	}
+
+	public W getZ(){
+		return this.third;
+	}
 
 
 }

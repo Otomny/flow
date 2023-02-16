@@ -16,3 +16,11 @@ distributed:
     thread_pool_size: 4
   # use redis pub/sub to publish and receive chat messages
   enable_broadcast_chat: true
+# Configuration for world things
+world:
+  # Configuration for block pastings 
+  pasting:
+    # Number of blocks pasted per ticks
+    blocks_per_tick: 600
+    # Number of chunks updates per tick if using native block set
+    chunk_update_per_tick: 1
