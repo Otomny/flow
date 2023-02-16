@@ -12,15 +12,15 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
-import fr.omny.flow.aop.GenericProxyFactory;
 import fr.omny.flow.utils.Objects;
+import fr.omny.odi.proxy.ProxyFactory;
 
 @SuppressWarnings("unchecked")
 public class ProxyMongoObject<T> implements InvocationHandler {
 
 	public static <T> T createProxySilent(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
 		try {
-			return (T) GenericProxyFactory.newProxyInstance(originalInstance.getClass(),
+			return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(),
 					new ProxyMongoObject<T>(originalInstance, fieldUpdate));
 		} catch (Exception e) {
 			throw new RuntimeException(e);
@@ -28,7 +28,7 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 	}
 
 	public static <T> T createProxy(T originalInstance, Consumer<FieldData<T>> fieldUpdate) throws Exception {
-		return (T) GenericProxyFactory.newProxyInstance(originalInstance.getClass(),
+		return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(),
 				new ProxyMongoObject<T>(originalInstance, fieldUpdate));
 	}
 
@@ -81,7 +81,7 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 			});
 			Object result = remoteMethod.invoke(this.instance, arguments);
 			int newHashCodeGlobal = java.util.Objects.hashCode(this.instance);
-			if(oldHashCodeGlobal != newHashCodeGlobal){
+			if (oldHashCodeGlobal != newHashCodeGlobal) {
 				for (Field field : this.fields) {
 					var currentValue = field.get(this.instance);
 					int oldHashCode = hashCodes.get(field);
@@ -91,7 +91,7 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 					}
 				}
 			}
-			
+
 			return result;
 		}
 	}
