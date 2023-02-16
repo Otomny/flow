@@ -17,6 +17,9 @@ import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.redisson.api.RedissonClient;
 
+import fr.omny.flow.aop.EnvironmentMethodListener;
+import fr.omny.flow.aop.RunOnDev;
+import fr.omny.flow.aop.RunOnProd;
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.config.ConfigApplier;
@@ -35,6 +38,7 @@ import fr.omny.guis.utils.ReflectionUtils;
 import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
 import fr.omny.odi.utils.PreClass;
+import fr.omny.odi.utils.Predicates;
 
 /**
  * 
@@ -62,6 +66,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		var configApplier = new ConfigApplier(configFile);
 		Utils.registerCallConstructor(configApplier);
 		Injector.registerWireListener(configApplier);
+		Injector.registerMethodCallListener(new EnvironmentMethodListener());
 
 		List<String> ignorePackages = List.of("fr.omny.guis");
 
@@ -211,10 +216,21 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				getServer().getPluginManager().callEvent(event);
 			});
 		}
+		Injector.findEachWithClasses(Predicates.alwaysTrue()).forEach(entry -> {
+			for (Method method : entry.getKey().getDeclaredMethods()) {
+				var values = entry.getValue().values();
+				if (method.isAnnotationPresent(RunOnDev.class) && Env.getEnvType().equalsIgnoreCase("development")) {
+					values.forEach(
+							proxyInstance -> Utils.callMethodQuiet(method, proxyInstance.getClass(), proxyInstance, new Object[] {}));
+				} else if (method.isAnnotationPresent(RunOnProd.class) && Env.getEnvType().equalsIgnoreCase("production")) {
+					values.forEach(
+							proxyInstance -> Utils.callMethodQuiet(method, proxyInstance.getClass(), proxyInstance, new Object[] {}));
+				}
+			}
+		});
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));
-
 	}
 
 	@Override
