@@ -17,6 +17,20 @@ public class Objects {
 	}
 
 	/**
+	 * Cast an object as boolean
+	 * @param o
+	 * @return
+	 */
+	public static boolean asBoolean(Object o){
+		if(o == null)
+			return false;
+		if(o instanceof Boolean b){
+			return b.booleanValue();
+		}
+		return false;
+	}
+
+	/**
 	 * @param method
 	 * @return
 	 */
