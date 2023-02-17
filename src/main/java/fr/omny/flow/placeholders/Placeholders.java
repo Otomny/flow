@@ -8,12 +8,15 @@ import java.util.regex.Pattern;
 import org.bukkit.entity.Player;
 
 import fr.omny.odi.Component;
+import lombok.Getter;
 
 @Component
 public class Placeholders {
 
-	private Map<String, Placeholder> placeholders = new HashMap<>();
-	private Pattern pattern = Pattern.compile("\\%(.*?)\\%");
+	@Getter
+	private final Map<String, Placeholder> placeholders = new HashMap<>();
+	@Getter
+	private final Pattern pattern = Pattern.compile("\\%(.*?)\\%");
 
 	/**
 	 * @param placeholder
