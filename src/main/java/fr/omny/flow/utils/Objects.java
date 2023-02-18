@@ -27,7 +27,7 @@ public class Objects {
 		if(o instanceof Boolean b){
 			return b.booleanValue();
 		}
-		return false;
+		return true;
 	}
 
 	/**
