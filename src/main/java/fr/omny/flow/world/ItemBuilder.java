@@ -121,14 +121,14 @@ public class ItemBuilder {
 	/**
 	 * @return A copy of the item stack
 	 */
-	public ItemStack createForDuplicate() {
+	public ItemStack buildClone() {
 		return this.item.clone();
 	}
 
 	/**
 	 * @return The item stack
 	 */
-	public ItemStack create() {
+	public ItemStack build() {
 		return this.item;
 	}
 
