@@ -1,6 +1,5 @@
 package fr.omny.flow.utils;
 
-
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -63,8 +62,7 @@ public class DoublyLinkedList<E> {
 	private Node<E> head;
 	@Getter
 	private Node<E> tail;
-	private AtomicInteger size;
-	private boolean needRecalc;
+	private AtomicInteger size = new AtomicInteger(0);
 
 	public DoublyLinkedList() {
 		this.head = null;
@@ -82,6 +80,9 @@ public class DoublyLinkedList<E> {
 	public void insertHead(Node<E> node) {
 		if (this.head == null) {
 			this.head = node;
+			if (this.tail == null) {
+				this.tail = node;
+			}
 		} else {
 			this.head.setPrevious(node);
 			node.setNext(this.head);

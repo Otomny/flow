@@ -82,7 +82,7 @@ public class LRUCache<K, V> implements Cache<K, V> {
 			if (this.size() >= this.maxSize) {
 				this.evictTail();
 			}
-			this.refMap.add(item);
+			this.refMap.addHead(item);
 			newHead = this.refMap.getHead();
 		}
 		if (newHead == null) {
