@@ -1,6 +1,5 @@
 package fr.omny.flow.data.implementation;
 
-
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -9,7 +8,9 @@ import java.util.function.Function;
 import java.util.stream.StreamSupport;
 
 import fr.omny.flow.data.JavaRepository;
+import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.Objects;
+import fr.omny.odi.Autowired;
 
 /**
  * 
@@ -19,8 +20,11 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 	private Map<ID, T> data = new ConcurrentHashMap<>();
 	private Function<T, ID> mappingFunction;
 
-	public InMemoryRepository(Function<T, ID> mappingFunction) {
+	private Dispatcher dispatcher;
+
+	public InMemoryRepository(Function<T, ID> mappingFunction, @Autowired Dispatcher dispatcher) {
 		this.mappingFunction = mappingFunction;
+		this.dispatcher = dispatcher;
 	}
 
 	@Override
@@ -65,7 +69,7 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 
 	@Override
 	public CompletableFuture<Optional<T>> findByIdAsync(ID id) {
-		throw new UnsupportedOperationException("findByIdAsync is not implemented");
+		return this.dispatcher.submit(() -> findById(id));
 	}
 
 	@Override
@@ -81,17 +85,19 @@ public class InMemoryRepository<T, ID> implements JavaRepository<T, ID> {
 
 	@Override
 	public <S extends T> boolean save(S entity) {
-		throw new UnsupportedOperationException("Save is not implemented");
+		var id = this.mappingFunction.apply(entity);
+		return this.data.put(id, entity) != null;
 	}
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
-		throw new UnsupportedOperationException("Save all is not implemented");
+		entities.forEach(this::save);
+		return true;
 	}
 
 	@Override
 	public <S extends T> CompletableFuture<Boolean> saveAsync(S entity) {
-		throw new UnsupportedOperationException("Save async is not implemented");
+		return dispatcher.submit(() -> this.save(entity));
 	}
 
 }
