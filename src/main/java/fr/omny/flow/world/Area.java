@@ -80,8 +80,8 @@ public class Area {
 		var snapshots = getChunksSnapshots();
 		List<BlockUpdate> blockUpdates = new ArrayList<>();
 
-		for (int x = minX; x <= maxX + 1; x++) {
-			for (int z = minZ; z <= maxZ + 1; z++) {
+		for (int x = minX; x <= maxX; x++) {
+			for (int z = minZ; z <= maxZ; z++) {
 				for (int y = maxY; y >= minY; y--) {
 					var chunkSnapshot = snapshots
 							.get(Tuple.of(x >> 4, z >> 4));

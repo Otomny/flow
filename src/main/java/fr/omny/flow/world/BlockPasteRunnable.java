@@ -91,7 +91,11 @@ public class BlockPasteRunnable implements Runnable {
 		var iterator = blockUpdates.iterator();
 		while (iterator.hasNext()) {
 			var blockUpdate = iterator.next();
-			provider.orElse(blockPasteProvider).blockPaste(blockUpdate);
+			try {
+				provider.orElse(blockPasteProvider).blockPaste(blockUpdate);
+			} catch (Exception exception) {
+				exception.printStackTrace();
+			}
 			iterator.remove();
 			currentLooped++;
 			if (currentLooped > this.blockPerTicks) {

@@ -33,7 +33,7 @@ public class BlockUpdate {
 	 * @param type
 	 * @return
 	 */
-	public static Predicate<BlockUpdate> filterBlockType(Material type) {
+	public static Predicate<BlockUpdate> filter(Material type) {
 		return blockUpdate -> blockUpdate.getType() == type;
 	}
 

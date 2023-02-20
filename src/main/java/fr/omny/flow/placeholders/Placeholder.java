@@ -1,7 +1,5 @@
 package fr.omny.flow.placeholders;
 
-import java.util.function.Function;
-
 import org.bukkit.entity.Player;
 
 import lombok.AllArgsConstructor;

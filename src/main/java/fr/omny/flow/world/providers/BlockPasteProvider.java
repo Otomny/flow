@@ -17,6 +17,7 @@ public class BlockPasteProvider implements BlockApplyProvider {
 	public void blockPaste(BlockUpdate blockUpdate) {
 		World world = Bukkit.getWorld(blockUpdate.getWorld());
 		var blockPosition = blockUpdate.getBlockPosition();
+		world.setType(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(), blockUpdate.getType());
 		world.setBlockData(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(),
 				Bukkit.createBlockData(blockUpdate.getBlockData()));
 	}
