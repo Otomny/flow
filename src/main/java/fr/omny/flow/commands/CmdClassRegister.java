@@ -1,7 +1,8 @@
 package fr.omny.flow.commands;
 
-
 import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -21,17 +22,19 @@ import fr.omny.odi.utils.PreClass;
 public class CmdClassRegister implements ClassRegister {
 
 	@Override
-	public void register(FlowPlugin plugin) {
-		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class) && preClass.isNotInner();
+	public List<Object> register(FlowPlugin plugin) {
+		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class) && preClass.isNotByteBuddy();
 		Set<Class<?>> commands = Stream.concat(Utils.getClasses(plugin.getPackageName(), commandsFilter).stream(),
 				Utils.getClasses("fr.omny.flow", commandsFilter).stream()).collect(Collectors.toSet());
 
+		List<Object> generated = new ArrayList<>();
 		Optional<CommandMap> map = ReflectionUtils.get(Bukkit.getServer(), "commandMap");
 		map.ifPresentOrElse(commandMap -> {
 			commands.forEach(klass -> {
 				try {
 					Cmd cmdInstance = (Cmd) Utils.callConstructor(klass);
 					Injector.wire(cmdInstance);
+					generated.add(cmdInstance);
 					commandMap.register(cmdInstance.getName(), "", cmdInstance);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 						| SecurityException e) {
@@ -39,6 +42,7 @@ public class CmdClassRegister implements ClassRegister {
 				}
 			});
 		}, () -> plugin.getLogger().warning("Could not find commandMap, unable to auto register commands instances"));
+		return generated;
 	}
 
 }

@@ -1,7 +1,7 @@
 package fr.omny.flow.listeners;
 
-
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -18,28 +18,30 @@ import fr.omny.odi.utils.PreClass;
 public class ListenerClassRegister implements ClassRegister {
 
 	@Override
-	public void register(FlowPlugin plugin) {
+	public List<Object> register(FlowPlugin plugin) {
 		// Init listeners
 		Predicate<PreClass> listenerFilter = preClass -> preClass.isInterfacePresent(Listener.class)
 				&& !FlowPlugin.IGNORED_PACKAGES.stream().anyMatch(s -> s.startsWith(preClass.getPackageName()))
-				&& preClass.isNotInner();
+				&& preClass.isNotInner()
+				&& preClass.isNotByteBuddy();
 
 		// No duplicate
 		Set<Class<?>> listeners = Stream.concat(Utils.getClasses(plugin.getPackageName(), listenerFilter).stream(),
 				Utils.getClasses("fr.omny.flow", listenerFilter).stream()).collect(Collectors.toSet());
 
-		listeners.forEach(klass -> {
+		return listeners.stream().map(klass -> {
 			try {
 				Listener listenerInstance = (Listener) Utils.callConstructor(klass);
 				if (listenerInstance != null) {
 					Injector.wire(listenerInstance);
 					plugin.getServer().getPluginManager().registerEvents(listenerInstance, plugin);
 				}
+				return listenerInstance;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| SecurityException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
-		});
+		}).map(Object.class::cast).toList();
 	}
 
 }

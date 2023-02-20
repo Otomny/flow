@@ -1,7 +1,7 @@
 package fr.omny.flow.tasks;
 
-
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -20,14 +20,15 @@ import fr.omny.odi.utils.PreClass;
 public class RunnableClassRegister implements ClassRegister {
 
 	@Override
-	public void register(FlowPlugin plugin) {
+	public List<Object> register(FlowPlugin plugin) {
 		Predicate<PreClass> runnablePredicate = preClass -> preClass.isNotInner()
-				&& preClass.isInterfacePresent(Runnable.class) && preClass.isAnnotationPresent(RunnableConfig.class);
+				&& preClass.isInterfacePresent(Runnable.class) && preClass.isAnnotationPresent(RunnableConfig.class)
+				&& preClass.isNotByteBuddy();
 
 		Set<Class<?>> runnableClasses = Stream.concat(Utils.getClasses(plugin.getPackageName(), runnablePredicate).stream(),
 				Utils.getClasses("fr.omny.flow", runnablePredicate).stream()).collect(Collectors.toSet());
 
-		runnableClasses.forEach(klass -> {
+		return runnableClasses.stream().map(klass -> {
 			try {
 				var bukkitConfig = klass.getAnnotation(RunnableConfig.class);
 				var name = bukkitConfig.value();
@@ -66,12 +67,12 @@ public class RunnableClassRegister implements ClassRegister {
 						dispatcher.submit(bukkitRunnable, delayAsMillis, TimeUnit.MILLISECONDS);
 					}
 				}
-
+				return bukkitRunnable;
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
 					| SecurityException e) {
-				e.printStackTrace();
+				throw new RuntimeException(e);
 			}
-		});
+		}).map(Object.class::cast).toList();
 	}
 
 }

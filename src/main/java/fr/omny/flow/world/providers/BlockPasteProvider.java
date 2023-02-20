@@ -1,6 +1,5 @@
 package fr.omny.flow.world.providers;
 
-
 import org.bukkit.Bukkit;
 import org.bukkit.World;
 
@@ -19,7 +18,7 @@ public class BlockPasteProvider implements BlockApplyProvider {
 		World world = Bukkit.getWorld(blockUpdate.getWorld());
 		var blockPosition = blockUpdate.getBlockPosition();
 		world.setBlockData(blockPosition.getX(), blockPosition.getY(), blockPosition.getZ(),
-				Bukkit.createBlockData(blockUpdate.getNewBlockData()));
+				Bukkit.createBlockData(blockUpdate.getBlockData()));
 	}
 
 	@Override

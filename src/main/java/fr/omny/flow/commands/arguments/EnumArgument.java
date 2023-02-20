@@ -1,6 +1,5 @@
 package fr.omny.flow.commands.arguments;
 
-
 import java.util.List;
 import java.util.Optional;
 
@@ -23,7 +22,7 @@ public class EnumArgument<E extends Enum<E>> extends CmdArgument<E> {
 	public Optional<E> getValue(String textValue, CommandSender sender, Arguments precedentArguments) {
 		Enum<E>[] constants = enumClass.getEnumConstants();
 		for (Enum<E> constant : constants) {
-			if (constant.toString().equals(textValue)) {
+			if (constant.toString().equalsIgnoreCase(textValue)) {
 				return Optional.of((E) constant);
 			}
 		}

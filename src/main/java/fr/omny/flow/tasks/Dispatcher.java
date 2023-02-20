@@ -1,6 +1,5 @@
 package fr.omny.flow.tasks;
 
-
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -14,6 +13,9 @@ import fr.omny.odi.Component;
 public class Dispatcher {
 
 	private ScheduledExecutorService executor;
+
+	Dispatcher() {
+	}
 
 	public Dispatcher(@Config("distributed.thread_config.thread_pool_size") int threadPoolSize) {
 		LoggingThreadFactory threadFactory = new LoggingThreadFactory();
@@ -41,7 +43,7 @@ public class Dispatcher {
 	 * @param period
 	 * @param timeUnit
 	 */
-	public void submitFixedRate(Runnable runnable, long delay, long period, TimeUnit timeUnit){
+	public void submitFixedRate(Runnable runnable, long delay, long period, TimeUnit timeUnit) {
 		this.executor.scheduleAtFixedRate(runnable, delay, period, timeUnit);
 	}
 
@@ -52,7 +54,7 @@ public class Dispatcher {
 	 * @param period
 	 * @param timeUnit
 	 */
-	public void submitFixedDelay(Runnable runnable, long delay, long period, TimeUnit timeUnit){
+	public void submitFixedDelay(Runnable runnable, long delay, long period, TimeUnit timeUnit) {
 		this.executor.scheduleWithFixedDelay(runnable, delay, period, timeUnit);
 	}
 

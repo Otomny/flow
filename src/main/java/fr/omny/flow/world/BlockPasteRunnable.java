@@ -1,8 +1,8 @@
 package fr.omny.flow.world;
 
-
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -13,6 +13,7 @@ import fr.omny.flow.config.Config;
 import fr.omny.flow.tasks.RunnableConfig;
 import fr.omny.flow.world.pasting.BlockBatch;
 import fr.omny.flow.world.providers.BlockApplyProvider;
+import fr.omny.flow.world.providers.BlockPasteProvider;
 import fr.omny.odi.Autowired;
 
 @RunnableConfig(delay = 60L, period = 1L)
@@ -22,14 +23,17 @@ public class BlockPasteRunnable implements Runnable {
 	@Config("world.pasting.blocks_per_tick")
 	private int blockPerTicks;
 	@Autowired
-	private BlockApplyProvider provider;
+	private Optional<BlockApplyProvider> provider;
+	@Autowired
+	private BlockPasteProvider blockPasteProvider;
 
-	public BlockPasteRunnable() {}
+	public BlockPasteRunnable() {
+	}
 
 	/**
 	 * Update a block type
 	 * 
-	 * @param block The block
+	 * @param block   The block
 	 * @param newType The desired type
 	 */
 	public void update(Block block, Material newType) {
@@ -87,14 +91,14 @@ public class BlockPasteRunnable implements Runnable {
 		var iterator = blockUpdates.iterator();
 		while (iterator.hasNext()) {
 			var blockUpdate = iterator.next();
-			provider.blockPaste(blockUpdate);
+			provider.orElse(blockPasteProvider).blockPaste(blockUpdate);
 			iterator.remove();
 			currentLooped++;
 			if (currentLooped > this.blockPerTicks) {
 				return;
 			}
 		}
-		provider.endBlockPaste(blockBatch);
+		provider.orElse(blockPasteProvider).endBlockPaste(blockBatch);
 		this.blockBatchs.remove();
 	}
 

@@ -1,8 +1,8 @@
 package fr.omny.flow.plugins;
 
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -65,18 +65,22 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		// Add plugins components
 		Injector.addFrom(packageName);
 
-		// Get all classes that implement ClassRegister interface, and call their "register" method
-		// This way, we can implement in their own classes, specials components that get auto registered (Cmd, Listener, etc...)
+		// Get all classes that implement ClassRegister interface, and call their
+		// "register" method
+		// This way, we can implement in their own classes, specials components that get
+		// auto registered (Cmd, Listener, etc...)
 		Predicate<PreClass> classRegisterFilter = preClass -> preClass.isInterfacePresent(ClassRegister.class)
-				&& preClass.isNotInner();
+				&& preClass.isNotInner()
+				&& preClass.isNotByteBuddy();
 		Set<Class<?>> classes = Stream.concat(Utils.getClasses(packageName, classRegisterFilter).stream(),
 				Utils.getClasses("fr.omny.flow", classRegisterFilter).stream()).collect(Collectors.toSet());
+		List<Object> generated = new ArrayList<>();
 
 		for (Class<?> classRegisterImpl : classes) {
 			try {
 				ClassRegister classRegister = (ClassRegister) Utils.callConstructor(classRegisterImpl);
 				Utils.autowire(classRegister);
-				classRegister.register(this);
+				generated.addAll(classRegister.register(this));
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				e.printStackTrace();
@@ -91,7 +95,8 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 			});
 		}
 
-		// In all registered services, run the method annotated with RunOnDev or RunOnProd
+		// In all registered services, run the method annotated with RunOnDev or
+		// RunOnProd
 		Injector.findEachWithClasses(Predicates.alwaysTrue()).forEach(entry -> {
 			for (Method method : entry.getKey().getDeclaredMethods()) {
 				var values = entry.getValue().values();
@@ -105,7 +110,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 			}
 		});
 
-		
+		generated.forEach(Injector::wire);
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));

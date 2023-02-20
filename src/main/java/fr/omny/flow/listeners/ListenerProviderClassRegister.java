@@ -1,8 +1,9 @@
 package fr.omny.flow.listeners;
 
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -20,10 +21,11 @@ import fr.omny.odi.utils.PreClass;
 public class ListenerProviderClassRegister implements ClassRegister {
 
 	@Override
-	public void register(FlowPlugin plugin) {
+	public List<Object> register(FlowPlugin plugin) {
 		Predicate<PreClass> listenerProviderFilter = preClass -> preClass.isInterfacePresent(ListenerProvider.class)
 				&& !FlowPlugin.IGNORED_PACKAGES.stream().anyMatch(s -> s.startsWith(preClass.getPackageName()))
-				&& preClass.isNotInner();
+				&& preClass.isNotInner()
+				&& preClass.isNotByteBuddy();
 
 		// Listeners providers
 		Set<Class<?>> listenerProviders = Stream
@@ -31,10 +33,12 @@ public class ListenerProviderClassRegister implements ClassRegister {
 						Utils.getClasses("fr.omny.flow", listenerProviderFilter).stream())
 				.collect(Collectors.toSet());
 
-		listenerProviders.forEach(klass -> {
+		return listenerProviders.stream().map(klass -> {
+			List<Object> generated = new ArrayList<>();
 			try {
 				ListenerProvider listenerProviderInstance = (ListenerProvider) Utils.callConstructor(klass);
 				Injector.wire(listenerProviderInstance);
+				generated.add(listenerProviderInstance);
 				for (Method method : klass.getDeclaredMethods()) {
 					if (method.getReturnType() == Listener.class) {
 						Listener listenerInstance = (Listener) Utils.callMethod(method, klass, listenerProviderInstance,
@@ -42,6 +46,7 @@ public class ListenerProviderClassRegister implements ClassRegister {
 						if (listenerInstance != null) {
 							Injector.wire(listenerInstance);
 							plugin.getServer().getPluginManager().registerEvents(listenerInstance, plugin);
+							generated.add(listenerInstance);
 						}
 					}
 				}
@@ -49,8 +54,8 @@ public class ListenerProviderClassRegister implements ClassRegister {
 					| InvocationTargetException e) {
 				e.printStackTrace();
 			}
-
-		});
+			return generated;
+		}).flatMap(List::stream).toList();
 	}
 
 }

@@ -1,5 +1,7 @@
 package fr.omny.flow.aop;
 
+import java.util.List;
+
 import fr.omny.flow.plugins.FlowPlugin;
 
 /**
@@ -7,6 +9,11 @@ import fr.omny.flow.plugins.FlowPlugin;
  */
 public interface ClassRegister {
 
-	void register(FlowPlugin plugin);
+	/**
+	 * 
+	 * @param plugin
+	 * @return All the instances created
+	 */
+	List<Object> register(FlowPlugin plugin);
 
 }
