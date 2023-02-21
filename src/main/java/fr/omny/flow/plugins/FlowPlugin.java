@@ -20,6 +20,7 @@ import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.ObjectUpdate;
 import fr.omny.flow.events.data.DataUpdateEvent;
+import fr.omny.flow.utils.NMS;
 import fr.omny.guis.OGui;
 import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
@@ -32,6 +33,16 @@ import fr.omny.odi.utils.Predicates;
 public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 
 	public static final List<String> IGNORED_PACKAGES = List.of("fr.omny.guis");
+
+	private static NMS nms;
+
+	public static NMS getNms() {
+		return nms;
+	}
+
+	private static void setNMS(NMS nms) {
+		FlowPlugin.nms = nms;
+	}
 
 	public abstract void load();
 
@@ -49,6 +60,8 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 		// Read config file
 		this.saveDefaultConfig();
 		var configFile = getConfig();
+
+		setNMS(new NMS());
 
 		// Register pre wire initializer
 		var configApplier = new ConfigApplier(configFile);
