@@ -1,6 +1,5 @@
 package fr.omny.flow.commands;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -78,9 +77,7 @@ public abstract class Cmd extends Command implements CommandComponent {
 			commandComponents.add(commandComponent);
 			comps.put(index, commandComponents);
 		}
-		if (commandComponent instanceof SubCmd subCmd) {
-			Injector.wire(subCmd);
-		}
+		Injector.wire(commandComponent);
 	}
 
 	@Override
