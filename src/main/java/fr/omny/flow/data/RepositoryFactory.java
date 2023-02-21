@@ -1,6 +1,5 @@
 package fr.omny.flow.data;
 
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.ParameterizedType;
@@ -13,6 +12,7 @@ import fr.omny.flow.data.implementation.InMemoryRepository;
 import fr.omny.flow.data.implementation.MongoDBRepository;
 import fr.omny.flow.data.implementation.RedissonRepository;
 import fr.omny.flow.utils.Objects;
+import fr.omny.flow.utils.StrUtils;
 import fr.omny.odi.Utils;
 import fr.omny.odi.utils.Reflections;
 import jodd.typeconverter.TypeConversionException;
@@ -56,7 +56,21 @@ public class RepositoryFactory {
 	@SuppressWarnings("unchecked")
 	public static <T, ID> JavaRepository<T, ID> createJavaRepository(Class<?> repositoryClass) {
 		try {
-			return Utils.callConstructor(InMemoryRepository.class, false,
+			var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), MongoRepository.class);
+			Class<?>[] classes = List.of(typeNames).stream().map(m -> {
+				try {
+					return Class.forName(m);
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+				return null;
+			}).filter(Objects::notNull).toArray(Class<?>[]::new);
+			var dataType = classes[0];
+			var keyType = classes[1];
+			Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
+			String collectionName = repositoryData.name().equals("__class") ? StrUtils.toSnakeCase(dataType.getSimpleName())
+					: repositoryData.name();
+			return Utils.callConstructor(InMemoryRepository.class, false, dataType, keyType, collectionName,
 					mappingFactory(repositoryClass, JavaRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -83,8 +97,11 @@ public class RepositoryFactory {
 		}).filter(Objects::notNull).toArray(Class<?>[]::new);
 		var dataType = classes[0];
 		var keyType = classes[1];
+		Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
+		String collectionName = repositoryData.name().equals("__class") ? StrUtils.toSnakeCase(dataType.getSimpleName())
+				: repositoryData.name();
 		try {
-			return Utils.callConstructor(MongoDBRepository.class, false, dataType, keyType,
+			return Utils.callConstructor(MongoDBRepository.class, false, dataType, keyType, collectionName,
 					mappingFactory(repositoryClass, MongoRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -111,8 +128,11 @@ public class RepositoryFactory {
 		}).filter(Objects::notNull).toArray(Class<?>[]::new);
 		var dataType = classes[0];
 		var keyType = classes[1];
+		Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
+		String collectionName = repositoryData.name().equals("__class") ? StrUtils.toSnakeCase(dataType.getSimpleName())
+				: repositoryData.name();
 		try {
-			return Utils.callConstructor(RedissonRepository.class, false, dataType, keyType,
+			return Utils.callConstructor(RedissonRepository.class, false, dataType, keyType, collectionName,
 					mappingFactory(repositoryClass, RedisRepository.class));
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -120,7 +140,7 @@ public class RepositoryFactory {
 		return null;
 	}
 
-/**
+	/**
 	 * Create a setter function for a specific field
 	 * 
 	 * @param <T>
@@ -132,7 +152,7 @@ public class RepositoryFactory {
 		var fieldName = field.getName();
 		var setterMethodName = "set" + fieldName.substring(0, 1).toUpperCase() + fieldName.substring(1);
 		try {
-			var method = dataClass.getDeclaredMethod(setterMethodName, new Class<?>[] {field.getType()});
+			var method = dataClass.getDeclaredMethod(setterMethodName, new Class<?>[] { field.getType() });
 			return new BiFunction<T, Object, Object>() {
 				@Override
 				public Object apply(T data, Object fieldData) {

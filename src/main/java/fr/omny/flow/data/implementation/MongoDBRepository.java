@@ -1,6 +1,5 @@
 package fr.omny.flow.data.implementation;
 
-
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -40,7 +39,6 @@ import fr.omny.flow.events.data.DataEmitEvent;
 import fr.omny.flow.events.data.KnownDataUpdateEvent;
 import fr.omny.flow.plugins.Env;
 import fr.omny.flow.tasks.Dispatcher;
-import fr.omny.flow.utils.StrUtils;
 import fr.omny.flow.utils.mongodb.FlowCodec;
 import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
@@ -73,10 +71,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 
 	@SuppressWarnings("unchecked")
 	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
+			String collectionName,
 			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
 			@Autowired Dispatcher dispatcher, @Autowired("databaseName") String dbName) {
 		this.dispatcher = dispatcher;
-		this.collectionName = StrUtils.toSnakeCase(dataClass.getSimpleName());
+		this.collectionName = collectionName;
 		this.codecs = codecs;
 		this.dataClass = dataClass;
 		this.idClass = idClass;

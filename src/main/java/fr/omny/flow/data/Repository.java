@@ -11,4 +11,6 @@ public @interface Repository {
 
 	boolean cache() default false;
 
+	String name() default "__class";
+
 }
