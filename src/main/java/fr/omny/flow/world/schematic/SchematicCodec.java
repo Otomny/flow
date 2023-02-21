@@ -31,7 +31,7 @@ public class SchematicCodec implements Codec<Schematic> {
 	}
 
 	public SchematicVersion getPrefered() {
-		return null;
+		return get(1);
 	}
 
 	@Override

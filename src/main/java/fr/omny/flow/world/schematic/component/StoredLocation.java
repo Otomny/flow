@@ -1,6 +1,10 @@
 package fr.omny.flow.world.schematic.component;
 
-import org.bson.codecs.pojo.annotations.BsonProperty;
+import java.io.DataInputStream;
+import java.io.DataOutputStream;
+import java.io.IOException;
+
+import org.bukkit.Location;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -9,13 +13,53 @@ import lombok.Setter;
 @Setter
 public class StoredLocation {
 
-	@BsonProperty
+	/**
+	 * 
+	 * @param location
+	 * @return
+	 */
+	public static StoredLocation fromWorld(Location location) {
+		return new StoredLocation(location.getX(), location.getY(), location.getZ());
+	}
+
+	/**
+	 * 
+	 * @param inputStream
+	 * @return
+	 */
+	public static StoredLocation fromIO(DataInputStream inputStream) {
+		try {
+			double x = inputStream.readDouble();
+			double y = inputStream.readDouble();
+			double z = inputStream.readDouble();
+			return new StoredLocation(x, y, z);
+		} catch (IOException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
 	private double x;
-
-	@BsonProperty
 	private double y;
-
-	@BsonProperty
 	private double z;
 
+	/**
+	 * @param x
+	 * @param y
+	 * @param z
+	 */
+	private StoredLocation(double x, double y, double z) {
+		this.x = x;
+		this.y = y;
+		this.z = z;
+	}
+
+	public void storeIO(DataOutputStream outputStream) {
+		try {
+			outputStream.writeDouble(x);
+			outputStream.writeDouble(y);
+			outputStream.writeDouble(z);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 }

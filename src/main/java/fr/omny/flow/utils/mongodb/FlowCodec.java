@@ -16,6 +16,7 @@ import fr.omny.flow.utils.mongodb.codecs.ItemStackCodec;
 import fr.omny.flow.utils.mongodb.codecs.LocationCodec;
 import fr.omny.flow.utils.mongodb.codecs.WorldCodec;
 import fr.omny.flow.world.Area;
+import fr.omny.flow.world.schematic.SchematicCodec;
 import fr.omny.odi.Component;
 
 @Component
@@ -26,7 +27,7 @@ public class FlowCodec {
 
 	public FlowCodec() {
 		// Initializing
-		this.codecs.addAll(List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec()));
+		this.codecs.addAll(List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), new SchematicCodec()));
 		registerCodecProvider(PojoCodecProvider.builder().register(Area.class).build());
 	}
 
