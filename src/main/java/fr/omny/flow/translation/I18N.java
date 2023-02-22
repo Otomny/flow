@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import org.bukkit.entity.Player;
 
+import fr.omny.flow.placeholders.Placeholders;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Component;
 
@@ -16,6 +17,8 @@ public class I18N {
 	private TranslationRepository repository;
 	@Autowired
 	private Optional<PlayerToLocaleProvider> provider;
+	@Autowired
+	private Placeholders placeholders;
 
 	public I18N() {}
 
@@ -39,6 +42,19 @@ public class I18N {
 		var trns = possibleTranslation.get();
 		trns.getTranslations().put(key, translation);
 		this.repository.save(trns);
+	}
+
+	/**
+	 * Send a translation to the player
+	 * Apply placeholders transformation to it
+	 * 
+	 * @param player The player
+	 * @param key The translation key
+	 */
+	public void send(Player player, String key){
+		String translation = get(player, key);
+		String translationReplaced = placeholders.inject(translation, player);
+		player.sendMessage(translationReplaced);
 	}
 
 	/**
