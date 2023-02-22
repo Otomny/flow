@@ -24,6 +24,7 @@ import lombok.Setter;
 public class Schematic {
 
 	@Id
+	@Setter
 	private UUID id;
 
 	@Val
