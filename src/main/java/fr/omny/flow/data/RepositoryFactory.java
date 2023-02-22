@@ -56,7 +56,7 @@ public class RepositoryFactory {
 	@SuppressWarnings("unchecked")
 	public static <T, ID> JavaRepository<T, ID> createJavaRepository(Class<?> repositoryClass) {
 		try {
-			var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), MongoRepository.class);
+			var typeNames = Reflections.findTypeName(repositoryClass.getGenericInterfaces(), JavaRepository.class);
 			Class<?>[] classes = List.of(typeNames).stream().map(m -> {
 				try {
 					return Class.forName(m);
