@@ -1,6 +1,5 @@
 package fr.omny.flow.world;
 
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -67,7 +66,7 @@ public class ItemBuilder {
 	 */
 	public ItemBuilder description(List<String> texts) {
 		return applyMeta(meta -> {
-			if (!meta.hasLore()) {
+			if (!meta.hasLore() || meta.getLore() == null) {
 				meta.setLore(new ArrayList<>());
 			}
 			meta.getLore().addAll(texts);
