@@ -23,6 +23,15 @@ public class I18N {
 	public I18N() {}
 
 	/**
+	 * Return the locale used by a player
+	 * @param player
+	 * @return
+	 */
+	public String getLocale(Player player){
+		return this.provider.orElse(new DefaultPlayerLocaleProvider()).locale(player);
+	}
+
+	/**
 	 * Set a translation
 	 * 
 	 * @param locale      The language locale in lowercase (ISO 639-1)
