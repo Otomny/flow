@@ -102,9 +102,9 @@ public class Schematic {
 							+ height + "*" + length + "])");
 		}
 
-		for (int y = 0; y < height; y++) {
-			for (int x = 0; x < width; x++) {
-				for (int z = 0; z < length; z++) {
+		for (int x = 0; x < width; x++) {
+			for (int z = 0; z < length; z++) {
+				for (int y = 0; y < height; y++) {
 					int index = y * width * length + x * length + z;
 					String blockAt = blocks[index];
 					BlockData blockData = Bukkit.createBlockData(blockAt);
