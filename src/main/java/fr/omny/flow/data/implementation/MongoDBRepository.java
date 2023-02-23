@@ -43,6 +43,7 @@ import fr.omny.flow.utils.mongodb.FlowCodec;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject.FieldData;
 import fr.omny.odi.Autowired;
+import fr.omny.odi.proxy.ProxyMarker;
 
 public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerInfo {
 
@@ -151,8 +152,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	}
 
 	protected <S extends T> boolean isProxy(S entity) {
-		var entClass = entity.getClass();
-		return !this.dataClass.isAssignableFrom(entClass) && this.dataClass != entClass;
+		return entity instanceof ProxyMarker;
 	}
 
 	@Override
@@ -256,9 +256,16 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public <S extends T> boolean save(S entity) {
 		var id = this.getId.apply(entity);
-		Bson filter = Filters.eq("_id", id);
-		var result = this.collection.replaceOne(filter, entity, UPSERT_OPTIONS);
-		return result.wasAcknowledged();
+		if (isProxy(entity)) {
+			Bson filter = Filters.eq("_id", id);
+			var result = this.collection.replaceOne(filter, this.cachedData.get(id), UPSERT_OPTIONS);
+			return result.wasAcknowledged();
+		} else {
+			Bson filter = Filters.eq("_id", id);
+			var result = this.collection.replaceOne(filter, entity, UPSERT_OPTIONS);
+			return result.wasAcknowledged();
+		}
+
 	}
 
 	@Override
