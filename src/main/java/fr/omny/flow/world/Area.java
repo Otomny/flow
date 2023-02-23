@@ -17,6 +17,7 @@ import fr.omny.flow.utils.NumberUtils;
 import fr.omny.flow.utils.tuple.Tuple;
 import fr.omny.flow.utils.tuple.Tuple2;
 import fr.omny.flow.world.schematic.Schematic;
+import fr.omny.flow.world.schematic.component.StoredLocation;
 import fr.omny.guis.OClass;
 import fr.omny.guis.OField;
 import lombok.Getter;
@@ -88,24 +89,27 @@ public class Area {
 				.collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 	}
 
-	public Schematic createSchematic() {
+	public Schematic createSchematic(Location offset) {
 		Objects.requireNonNull(this.start, "Error: Area, this.start is null");
 		Objects.requireNonNull(this.end, "Error: Area, this.end is null");
 		var minX = Math.min(this.start.getBlockX(), this.end.getBlockX());
-		var minZ = Math.min(this.start.getBlockZ(), this.end.getBlockZ());
 		var minY = Math.min(this.start.getBlockY(), this.end.getBlockY());
+		var minZ = Math.min(this.start.getBlockZ(), this.end.getBlockZ());
+
 		var maxX = Math.max(this.start.getBlockX(), this.end.getBlockX());
-		var maxZ = Math.max(this.start.getBlockZ(), this.end.getBlockZ());
 		var maxY = Math.max(this.start.getBlockY(), this.end.getBlockY());
+		var maxZ = Math.max(this.start.getBlockZ(), this.end.getBlockZ());
 		// World world = this.start.getWorld();
 
-		int width = maxX - minX;
-		int height = maxY - minY;
-		int length = maxZ - minZ;
+		int width = Math.abs(maxX - minX) + 1;
+		int height = Math.abs(maxY - minY) + 1;
+		int length = Math.abs(maxZ - minZ) + 1;
 
 		Schematic schematic = new Schematic();
 		schematic.setDimensions(width, height, length);
 		String[] blocks = new String[width * height * length];
+
+		System.out.println("Creating schematic with "+width+" * "+height+" * "+length);
 
 		var chunks = getChunks();
 		var snapshots = chunks.entrySet()
@@ -132,20 +136,11 @@ public class Area {
 			}
 		}
 
-		// load tile entities
-		// Set<Block> treated = new HashSet<>();
-		// for (Chunk chunk : chunks.values()) {
-		// for (BlockState tile : chunk.getTileEntities()) {
-		// Block block = tile.getBlock();
-		// if(treated.contains(block))
-		// continue;
-		// treated.add(block);
-		// throw new UnsupportedOperationException("Serializing tile entity is not
-		// implemented");
-		// }
-		// }
+		Location realOffset = offset.clone().subtract(
+				new Location(start.getWorld(), minX, minY, minZ));
 
 		schematic.setBlocks(blocks);
+		schematic.setOffset(StoredLocation.fromWorld(realOffset));
 
 		return schematic;
 	}

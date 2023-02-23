@@ -52,7 +52,7 @@ public class Schematic {
 	}
 
 	public int getLength() {
-		return this.dimensions.getY();
+		return this.dimensions.getZ();
 	}
 
 	public void setDimensions(int width, int height, int length) {
@@ -83,10 +83,24 @@ public class Schematic {
 	public void paste(Runnable onEnd, Location location, boolean skipAir) {
 		List<BlockUpdate> blockUpdate = new ArrayList<>();
 
+		var dx = location.getBlockX();
+		var dy = location.getBlockY();
+		var dz = location.getBlockZ();
+
+		var ox = (int) offset.getX();
+		var oy = (int) offset.getY();
+		var oz = (int) offset.getZ();
+
 		var height = getHeight();
 		var length = getLength();
 		var width = getWidth();
 		var world = location.getWorld().getName();
+
+		if (width * height * length != getBlocks().length) {
+			throw new IllegalStateException(
+					"Wrong size (expected " + getBlocks().length + ", got " + (width * height * length) + " [" + width + "*"
+							+ height + "*" + length + "])");
+		}
 
 		for (int y = 0; y < height; y++) {
 			for (int x = 0; x < width; x++) {
@@ -96,11 +110,10 @@ public class Schematic {
 					BlockData blockData = Bukkit.createBlockData(blockAt);
 					if (blockData.getMaterial() == Material.AIR && skipAir)
 						continue;
-					blockUpdate.add(BlockUpdate.create(world, x, y, z, blockData));
+					blockUpdate.add(BlockUpdate.create(world, x + dx - ox, y + dy - oy, z + dz - oz, blockData));
 				}
 			}
 		}
-		// TODO set block container content
 		Injector.getService(BlockPasteRunnable.class)
 				.add(onEnd, blockUpdate);
 	}
