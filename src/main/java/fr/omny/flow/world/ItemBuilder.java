@@ -66,10 +66,15 @@ public class ItemBuilder {
 	 */
 	public ItemBuilder description(List<String> texts) {
 		return applyMeta(meta -> {
-			if (!meta.hasLore() || meta.getLore() == null) {
-				meta.setLore(new ArrayList<>());
+			List<String> lores = new ArrayList<>();
+			lores.addAll(texts);
+
+			if (!meta.hasLore()) {
+				meta.setLore(lores);
+			} else {
+				meta.getLore().addAll(lores);
 			}
-			meta.getLore().addAll(texts);
+
 		});
 	}
 
