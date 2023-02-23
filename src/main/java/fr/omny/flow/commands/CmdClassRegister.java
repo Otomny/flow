@@ -33,7 +33,7 @@ public class CmdClassRegister implements ClassRegister {
 			commands.forEach(klass -> {
 				try {
 					Cmd cmdInstance = (Cmd) Utils.callConstructor(klass);
-					Injector.wire(cmdInstance);
+					deepWire(cmdInstance);
 					generated.add(cmdInstance);
 					commandMap.register(cmdInstance.getName(), "", cmdInstance);
 				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
@@ -46,28 +46,43 @@ public class CmdClassRegister implements ClassRegister {
 	}
 
 	@Override
-	
+
 	public void postWire(Object object) {
 		if (object instanceof Cmd cmd) {
-			cmd.getComps()
-					.values()
-					.stream()
-					.flatMap(List::stream)
-					.forEach(cmdComp -> {
-						Injector.wire(cmdComp);
-						if(cmdComp instanceof SubCmd subCmd)
-							deepWire(subCmd);
-					});
+			deepWire(cmd);
 		}
 	}
 
-	private void deepWire(SubCmd subCmd){
-		for(int k : subCmd.getComps().keySet()){
-			for(CommandComponent cmpComp : subCmd.getComps().get(k)){
+	private void deepWire(Cmd cmd) {
+		Injector.wire(cmd);
+		cmd.getComps()
+				.values()
+				.stream()
+				.flatMap(List::stream)
+				.forEach(cmdComp -> {
+					Injector.wire(cmdComp);
+					if (cmdComp instanceof SubCmd subCmd) {
+						deepWire(subCmd);
+						Injector.getLogger()
+								.ifPresent(logger -> {
+									logger.info("Perform class wiring on " + (subCmd == null ? "null" : subCmd.getClass()));
+								});
+
+					}
+				});
+	}
+
+	private void deepWire(SubCmd subCmd) {
+		for (int k : subCmd.getComps().keySet()) {
+			for (CommandComponent cmpComp : subCmd.getComps().get(k)) {
 				Injector.wire(cmpComp);
-				if(cmpComp instanceof SubCmd nestedSubCmd){
+				if (cmpComp instanceof SubCmd nestedSubCmd) {
 					deepWire(nestedSubCmd);
 				}
+				Injector.getLogger()
+						.ifPresent(logger -> {
+							logger.info("Perform class wiring on " + (cmpComp == null ? "null" : cmpComp.getClass()));
+						});
 			}
 		}
 	}

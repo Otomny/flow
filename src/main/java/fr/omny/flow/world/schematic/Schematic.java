@@ -25,15 +25,15 @@ public class Schematic {
 
 	@Id
 	@Setter
-	private UUID id;
+	private UUID id = UUID.randomUUID();
 
 	@Val
 	@Setter
-	private String name;
+	private String name = "none";
 
 	@Val
 	@Setter
-	private Tuple3<Integer, Integer, Integer> dimensions;
+	private Tuple3<Integer, Integer, Integer> dimensions = Tuple.of(0, 0, 0);
 
 	@Val
 	@Setter

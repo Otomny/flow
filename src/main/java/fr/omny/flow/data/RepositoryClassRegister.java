@@ -2,6 +2,8 @@ package fr.omny.flow.data;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import fr.omny.flow.aop.ClassRegister;
 import fr.omny.flow.plugins.FlowPlugin;
@@ -14,8 +16,14 @@ public class RepositoryClassRegister implements ClassRegister {
 	public List<Object> register(FlowPlugin plugin) {
 		// Get all classes that implements a repository with the annotation
 		List<Object> generated = new ArrayList<>();
-		var repositoryClasses = Utils.getClasses(plugin.getPackageName(),
-				klass -> klass.isAnnotationPresent(Repository.class) && klass.isNotByteBuddy());
+
+		var repositoryClasses = Stream
+				.concat(Utils.getClasses(plugin.getPackageName(),
+						klass -> klass.isAnnotationPresent(Repository.class) && klass.isNotByteBuddy())
+						.stream(),
+						Utils.getClasses("fr.omny.flow",
+								klass -> klass.isAnnotationPresent(Repository.class) && klass.isNotByteBuddy()).stream())
+				.collect(Collectors.toSet());
 		for (Class<?> implementationClass : repositoryClasses) {
 			if (CrudRepository.class.isAssignableFrom(implementationClass)) {
 				@SuppressWarnings({
