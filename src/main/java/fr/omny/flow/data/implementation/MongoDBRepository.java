@@ -40,7 +40,6 @@ import fr.omny.flow.events.data.KnownDataUpdateEvent;
 import fr.omny.flow.plugins.Env;
 import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.mongodb.FlowCodec;
-import fr.omny.flow.utils.mongodb.MongoSerializer;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject;
 import fr.omny.flow.utils.mongodb.ProxyMongoObject.FieldData;
 import fr.omny.odi.Autowired;
@@ -52,15 +51,13 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	private Class<?> dataClass;
 	private Class<?> idClass;
 	private MongoDatabase db;
-	private MongoCollection<Document> collection;
+	private MongoCollection<T> collection;
 	private Map<ID, T> cachedData = new HashMap<>();
 	private String collectionName;
 	private Dispatcher dispatcher;
 
 	// Mapping function
 	private Function<T, ID> getId;
-	private Function<T, Document> toDocument;
-	private Function<Document, T> fromDocument;
 	private RTopic topic;
 	private Consumer<FieldData<T>> fieldUpdater;
 
@@ -70,7 +67,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	// Synch utils
 
 	@SuppressWarnings("unchecked")
-	public MongoDBRepository(Class<?> dataClass, Class<?> idClass, Function<T, ID> mappingFunction,
+	public MongoDBRepository(Class<T> dataClass, Class<ID> idClass, Function<T, ID> mappingFunction,
 			String collectionName,
 			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
 			@Autowired Dispatcher dispatcher, @Autowired("databaseName") String dbName) {
@@ -80,13 +77,8 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 		this.dataClass = dataClass;
 		this.idClass = idClass;
 		this.db = client.getDatabase(dbName);
-		this.collection = db.getCollection(this.collectionName);
+		this.collection = db.getCollection(this.collectionName, dataClass);
 		this.getId = mappingFunction;
-
-		this.toDocument = (obj) -> MongoSerializer.transform(obj, dataClass);
-		this.fromDocument = (doc) -> {
-			return (T) MongoSerializer.from(doc, dataClass);
-		};
 
 		this.fieldUpdater = (fieldData) -> {
 			dispatcher.submit(() -> {
@@ -198,7 +190,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public boolean existsById(ID id) {
 		var projectionFields = Projections.fields(Projections.include("_id"));
-		return this.collection.find(Filters.eq("_id", id.toString())).projection(projectionFields).first() != null;
+		return this.collection.find(Filters.eq("_id", id)).projection(projectionFields).first() != null;
 	}
 
 	@Override
@@ -210,11 +202,10 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 				throw new RuntimeException(e);
 			}
 		}
-		Document document = this.collection.find(Filters.eq("_id", id.toString())).first();
-		if (document == null) {
+		T object = this.collection.find(Filters.eq("_id", id)).first();
+		if (object == null) {
 			return Optional.empty();
 		}
-		T object = this.fromDocument.apply(document);
 		this.cachedData.put(id, object);
 		try {
 			return Optional.of(ProxyMongoObject.createProxy(object, this.fieldUpdater));
@@ -233,8 +224,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 		List<T> availableObjets = new ArrayList<>();
 		var entitiesFound = this.collection.find();
 
-		for (Document document : entitiesFound) {
-			T object = this.fromDocument.apply(document);
+		for (T object : entitiesFound) {
 			var id = this.getId.apply(object);
 			this.cachedData.put(id, object);
 			availableObjets.add(object);
@@ -255,8 +245,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 		}
 		var entitiesFound = this.collection.find(Filters.in("_id", notFoundInCache.stream().map(ID::toString).toList()));
 
-		for (Document document : entitiesFound) {
-			T object = this.fromDocument.apply(document);
+		for (T object : entitiesFound) {
 			var id = this.getId.apply(object);
 			this.cachedData.put(id, object);
 			availableObjets.add(ProxyMongoObject.createProxySilent(object, this.fieldUpdater));
@@ -267,12 +256,8 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ServerI
 	@Override
 	public <S extends T> boolean save(S entity) {
 		var id = this.getId.apply(entity);
-		var idToString = id.toString();
-		Bson filter = Filters.eq("_id", idToString);
-
-		Document document = toDocument.apply(entity);
-		document.append("_id", idToString);
-		var result = this.collection.replaceOne(filter, document, UPSERT_OPTIONS);
+		Bson filter = Filters.eq("_id", id);
+		var result = this.collection.replaceOne(filter, entity, UPSERT_OPTIONS);
 		return result.wasAcknowledged();
 	}
 

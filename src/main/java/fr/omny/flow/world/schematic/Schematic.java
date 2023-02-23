@@ -2,7 +2,6 @@ package fr.omny.flow.world.schematic;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -24,10 +23,6 @@ import lombok.Setter;
 public class Schematic {
 
 	@Id
-	@Setter
-	private UUID id = UUID.randomUUID();
-
-	@Val
 	@Setter
 	private String name = "none";
 

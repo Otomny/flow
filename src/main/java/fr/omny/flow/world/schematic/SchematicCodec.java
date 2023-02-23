@@ -2,7 +2,6 @@ package fr.omny.flow.world.schematic;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
 import org.bson.BsonBinary;
 import org.bson.BsonReader;
@@ -39,7 +38,7 @@ public class SchematicCodec implements Codec<Schematic> {
 	public void encode(BsonWriter writer, Schematic value, EncoderContext encoderContext) {
 		var schematicSerializer = getPrefered();
 		writer.writeStartDocument();
-		writer.writeString("_id", value.getId().toString());
+		writer.writeString("_id", value.getName());
 		writer.writeInt32("version", schematicSerializer.getVersion());
 		writer.writeBinaryData("data", new BsonBinary(schematicSerializer.save(value)));
 		writer.writeEndDocument();
@@ -48,11 +47,11 @@ public class SchematicCodec implements Codec<Schematic> {
 	@Override
 	public Schematic decode(BsonReader reader, DecoderContext decoderContext) {
 		reader.readStartDocument();
-		String id = reader.readString("_id");
+		String name = reader.readString("_id");
 		int version = reader.readInt32("version");
 		var schematicDeserializer = get(version);
 		Schematic schematic = schematicDeserializer.load(reader.readBinaryData("data").getData());
-		schematic.setId(UUID.fromString(id));
+		schematic.setName(name);
 		reader.readEndDocument();
 		return schematic;
 	}

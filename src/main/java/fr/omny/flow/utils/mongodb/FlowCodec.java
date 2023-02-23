@@ -1,6 +1,5 @@
 package fr.omny.flow.utils.mongodb;
 
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -14,6 +13,7 @@ import com.mongodb.MongoClientSettings;
 
 import fr.omny.flow.utils.mongodb.codecs.ItemStackCodec;
 import fr.omny.flow.utils.mongodb.codecs.LocationCodec;
+import fr.omny.flow.utils.mongodb.codecs.StoredPlayerInventoryCodec;
 import fr.omny.flow.utils.mongodb.codecs.WorldCodec;
 import fr.omny.flow.world.Area;
 import fr.omny.flow.world.schematic.SchematicCodec;
@@ -27,7 +27,9 @@ public class FlowCodec {
 
 	public FlowCodec() {
 		// Initializing
-		this.codecs.addAll(List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), new SchematicCodec()));
+		this.codecs.addAll(
+				List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), new SchematicCodec(),
+						new StoredPlayerInventoryCodec()));
 		registerCodecProvider(PojoCodecProvider.builder().register(Area.class).build());
 	}
 

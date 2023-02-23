@@ -36,13 +36,11 @@ public class SchematicV1 implements SchematicVersion {
 			ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
 			DataInputStream dataInputStream = new DataInputStream(new GZIPInputStream(inputStream));
 
-			// We skip the version indicator
-			dataInputStream.readByte();
 			int width = IOUtils.readVarInt(dataInputStream);
 			int height = IOUtils.readVarInt(dataInputStream);
 			int length = IOUtils.readVarInt(dataInputStream);
 
-			int materialCount = dataInputStream.readShort();
+			int materialCount = IOUtils.readVarInt(dataInputStream);
 			List<String> blockDatas = new ArrayList<>();
 
 			for (int i = 0; i < materialCount; i++) {
@@ -100,6 +98,7 @@ public class SchematicV1 implements SchematicVersion {
 			}
 
 			StoredLocation offset = StoredLocation.fromIO(dataInputStream);
+			dataInputStream.close();
 
 			Schematic schematic = new Schematic();
 			schematic.setDimensions(width, height, length);
@@ -118,9 +117,6 @@ public class SchematicV1 implements SchematicVersion {
 		try {
 			ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream(32);
 			DataOutputStream dataOutputStream = new DataOutputStream(new GZIPOutputStream(byteArrayOutputStream));
-
-			// First, version
-			dataOutputStream.writeByte(getVersion());
 			// Dimensions
 			IOUtils.writeVarInt(dataOutputStream, data.getWidth());
 			IOUtils.writeVarInt(dataOutputStream, data.getHeight());
@@ -178,9 +174,7 @@ public class SchematicV1 implements SchematicVersion {
 				}
 			}
 
-			IOUtils.writeVarInt(dataOutputStream, (int) data.getOffSetX());
-			IOUtils.writeVarInt(dataOutputStream, (int) data.getOffSetY());
-			IOUtils.writeVarInt(dataOutputStream, (int) data.getOffSetZ());
+			data.getOffset().storeIO(dataOutputStream);
 			dataOutputStream.close();
 
 			byte[] dataArray = byteArrayOutputStream.toByteArray();
