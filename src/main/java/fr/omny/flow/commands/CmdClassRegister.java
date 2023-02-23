@@ -45,4 +45,31 @@ public class CmdClassRegister implements ClassRegister {
 		return generated;
 	}
 
+	@Override
+	
+	public void postWire(Object object) {
+		if (object instanceof Cmd cmd) {
+			cmd.getComps()
+					.values()
+					.stream()
+					.flatMap(List::stream)
+					.forEach(cmdComp -> {
+						Injector.wire(cmdComp);
+						if(cmdComp instanceof SubCmd subCmd)
+							deepWire(subCmd);
+					});
+		}
+	}
+
+	private void deepWire(SubCmd subCmd){
+		for(int k : subCmd.getComps().keySet()){
+			for(CommandComponent cmpComp : subCmd.getComps().get(k)){
+				Injector.wire(cmpComp);
+				if(cmpComp instanceof SubCmd nestedSubCmd){
+					deepWire(nestedSubCmd);
+				}
+			}
+		}
+	}
+
 }

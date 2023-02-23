@@ -2,8 +2,9 @@ package fr.omny.flow.plugins;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -87,13 +88,13 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 				&& preClass.isNotByteBuddy();
 		Set<Class<?>> classes = Stream.concat(Utils.getClasses(packageName, classRegisterFilter).stream(),
 				Utils.getClasses("fr.omny.flow", classRegisterFilter).stream()).collect(Collectors.toSet());
-		List<Object> generated = new ArrayList<>();
+		Map<ClassRegister, List<Object>> generated = new HashMap<>();
 
 		for (Class<?> classRegisterImpl : classes) {
 			try {
 				ClassRegister classRegister = (ClassRegister) Utils.callConstructor(classRegisterImpl);
 				Utils.autowire(classRegister);
-				generated.addAll(classRegister.register(this));
+				generated.put(classRegister, classRegister.register(this));
 			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
 					| InvocationTargetException e) {
 				e.printStackTrace();
@@ -123,7 +124,10 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo {
 			}
 		});
 
-		generated.forEach(Injector::wire);
+		generated.forEach((classRegister, generatedObj) -> generatedObj.forEach(obj -> {
+			Injector.wire(obj);
+			classRegister.postWire(obj);
+		}));
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));

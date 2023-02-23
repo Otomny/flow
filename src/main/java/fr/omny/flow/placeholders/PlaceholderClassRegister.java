@@ -76,4 +76,8 @@ public class PlaceholderClassRegister implements ClassRegister {
 		return generated;
 	}
 
+	@Override
+	public void postWire(Object object) {
+	}
+
 }

@@ -75,4 +75,8 @@ public class RunnableClassRegister implements ClassRegister {
 		}).map(Object.class::cast).toList();
 	}
 
+	@Override
+	public void postWire(Object object) {
+	}
+
 }

@@ -16,4 +16,10 @@ public interface ClassRegister {
 	 */
 	List<Object> register(FlowPlugin plugin);
 
+	/**
+	 * 
+	 * @param object
+	 */
+	void postWire(Object object);
+
 }

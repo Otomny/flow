@@ -18,9 +18,11 @@ import fr.omny.flow.commands.wrapper.Arguments;
 import fr.omny.flow.translation.I18N;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
+import lombok.Getter;
 
 public abstract class Cmd extends Command implements CommandComponent {
 
+	@Getter
 	private Map<Integer, List<CommandComponent>> comps;
 
 	@Autowired

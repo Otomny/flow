@@ -30,4 +30,8 @@ public class RepositoryClassRegister implements ClassRegister {
 		return generated;
 	}
 
+	@Override
+	public void postWire(Object object) {
+	}
+
 }

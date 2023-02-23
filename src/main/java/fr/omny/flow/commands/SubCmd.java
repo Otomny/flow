@@ -17,6 +17,7 @@ import lombok.Setter;
 
 public abstract class SubCmd implements CommandComponent {
 
+	@Getter
 	private Map<Integer, List<CommandComponent>> comps;
 
 	private String name;

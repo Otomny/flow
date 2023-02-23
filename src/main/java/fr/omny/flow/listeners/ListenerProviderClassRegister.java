@@ -58,4 +58,8 @@ public class ListenerProviderClassRegister implements ClassRegister {
 		}).flatMap(List::stream).toList();
 	}
 
+	@Override
+	public void postWire(Object object) {
+	}
+
 }
