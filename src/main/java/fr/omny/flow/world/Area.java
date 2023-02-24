@@ -11,12 +11,15 @@ import java.util.stream.Collectors;
 import org.bukkit.Chunk;
 import org.bukkit.ChunkSnapshot;
 import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.block.Chest;
 
 import fr.omny.flow.tasks.Dispatcher;
 import fr.omny.flow.utils.NumberUtils;
 import fr.omny.flow.utils.tuple.Tuple;
 import fr.omny.flow.utils.tuple.Tuple2;
 import fr.omny.flow.world.schematic.Schematic;
+import fr.omny.flow.world.schematic.component.StoredChest;
 import fr.omny.flow.world.schematic.component.StoredLocation;
 import fr.omny.guis.OClass;
 import fr.omny.guis.OField;
@@ -99,7 +102,9 @@ public class Area {
 		var maxX = Math.max(this.start.getBlockX(), this.end.getBlockX());
 		var maxY = Math.max(this.start.getBlockY(), this.end.getBlockY());
 		var maxZ = Math.max(this.start.getBlockZ(), this.end.getBlockZ());
-		// World world = this.start.getWorld();
+
+		Location realOffset = offset.clone().subtract(
+				new Location(start.getWorld(), minX, minY, minZ));
 
 		int width = Math.abs(maxX - minX) + 1;
 		int height = Math.abs(maxY - minY) + 1;
@@ -108,8 +113,6 @@ public class Area {
 		Schematic schematic = new Schematic();
 		schematic.setDimensions(width, height, length);
 		String[] blocks = new String[width * height * length];
-
-		System.out.println("Creating schematic with "+width+" * "+height+" * "+length);
 
 		var chunks = getChunks();
 		var snapshots = chunks.entrySet()
@@ -132,12 +135,15 @@ public class Area {
 							NumberUtils.mod(x, 16), y, NumberUtils.mod(z, 16)).getAsString();
 
 					blocks[index] = blockAt;
+
+					if (chunkSnapshot.getBlockType(NumberUtils.mod(x, 16), y, NumberUtils.mod(z, 16)) == Material.CHEST) {
+						var chunk = chunks.get(Tuple.of(x >> 4, z >> 4));
+						Chest chest = (Chest) chunk.getBlock(NumberUtils.mod(x, 16), y, NumberUtils.mod(z, 16)).getState();
+						schematic.getChests().add(StoredChest.fromTile(chest, xIndex, yIndex, zIndex));
+					}
 				}
 			}
 		}
-
-		Location realOffset = offset.clone().subtract(
-				new Location(start.getWorld(), minX, minY, minZ));
 
 		schematic.setBlocks(blocks);
 		schematic.setOffset(StoredLocation.fromWorld(realOffset));

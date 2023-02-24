@@ -18,6 +18,7 @@ import org.bukkit.Material;
 
 import fr.omny.flow.utils.IOUtils;
 import fr.omny.flow.world.schematic.Schematic;
+import fr.omny.flow.world.schematic.component.StoredChest;
 import fr.omny.flow.world.schematic.component.StoredLocation;
 
 public class SchematicV1 implements SchematicVersion {
@@ -98,12 +99,21 @@ public class SchematicV1 implements SchematicVersion {
 			}
 
 			StoredLocation offset = StoredLocation.fromIO(dataInputStream);
-			dataInputStream.close();
 
+			// chests contents
+			int chestCount = IOUtils.readVarInt(dataInputStream);
+			List<StoredChest> chests = new ArrayList<>();
+			for (int i = 0; i < chestCount; i++) {
+				StoredChest chest = StoredChest.fromIO(dataInputStream);
+				chests.add(chest);
+			}
+
+			dataInputStream.close();
 			Schematic schematic = new Schematic();
 			schematic.setDimensions(width, height, length);
 			schematic.setBlocks(matrix);
 			schematic.setOffset(offset);
+			schematic.setChests(chests);
 
 			return schematic;
 
@@ -175,6 +185,13 @@ public class SchematicV1 implements SchematicVersion {
 			}
 
 			data.getOffset().storeIO(dataOutputStream);
+
+			int chestCount = data.getChests().size();
+			IOUtils.writeVarInt(dataOutputStream, chestCount);
+			for (StoredChest chest : data.getChests()) {
+				chest.storeIO(dataOutputStream);
+			}
+
 			dataOutputStream.close();
 
 			byte[] dataArray = byteArrayOutputStream.toByteArray();
@@ -183,7 +200,6 @@ public class SchematicV1 implements SchematicVersion {
 			e.printStackTrace();
 		}
 		return new byte[] {};
-
 	}
 
 	protected <E> int mode(int result, List<E> materials) {

@@ -103,6 +103,12 @@ public class BlockPasteRunnable implements Runnable {
 			}
 		}
 		provider.orElse(blockPasteProvider).endBlockPaste(blockBatch);
+		try {
+			blockBatch.getOnEnd()
+					.run();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		this.blockBatchs.remove();
 	}
 

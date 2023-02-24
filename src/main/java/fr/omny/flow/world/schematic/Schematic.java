@@ -6,6 +6,7 @@ import java.util.List;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Chest;
 import org.bukkit.block.data.BlockData;
 
 import fr.omny.flow.data.Id;
@@ -14,6 +15,7 @@ import fr.omny.flow.utils.tuple.Tuple;
 import fr.omny.flow.utils.tuple.Tuple3;
 import fr.omny.flow.world.BlockPasteRunnable;
 import fr.omny.flow.world.BlockUpdate;
+import fr.omny.flow.world.schematic.component.StoredChest;
 import fr.omny.flow.world.schematic.component.StoredLocation;
 import fr.omny.odi.Injector;
 import lombok.Getter;
@@ -37,6 +39,10 @@ public class Schematic {
 	@Val
 	@Setter
 	private String[] blocks;
+
+	@Val
+	@Setter
+	private List<StoredChest> chests = new ArrayList<>();
 
 	public int getWidth() {
 		return this.dimensions.getX();
@@ -78,13 +84,13 @@ public class Schematic {
 	public void paste(Runnable onEnd, Location location, boolean skipAir) {
 		List<BlockUpdate> blockUpdate = new ArrayList<>();
 
-		var dx = location.getBlockX();
-		var dy = location.getBlockY();
-		var dz = location.getBlockZ();
+		final int dx = location.getBlockX();
+		final int dy = location.getBlockY();
+		final int dz = location.getBlockZ();
 
-		var ox = (int) offset.getX();
-		var oy = (int) offset.getY();
-		var oz = (int) offset.getZ();
+		final int ox = (int) offset.getX();
+		final int oy = (int) offset.getY();
+		final int oz = (int) offset.getZ();
 
 		var height = getHeight();
 		var length = getLength();
@@ -110,7 +116,24 @@ public class Schematic {
 			}
 		}
 		Injector.getService(BlockPasteRunnable.class)
-				.add(onEnd, blockUpdate);
+				.add(() -> {
+					// paste chest content
+					for (StoredChest storedChest : this.getChests()) {
+						Location realLocation = storedChest.getLocation()
+								.toLocation(location.getWorld())
+								.add(dx, dy, dz)
+								.subtract(ox, oy, oz);
+						if (realLocation.getBlock().getState() instanceof Chest chest) {
+							chest.getBlockInventory()
+									.setContents(storedChest.getContent());
+						} else {
+							throw new IllegalStateException(
+									"Error, loaded chest was not found in world coord: [real " + realLocation + "] [stored "
+											+ storedChest.getLocation() + "]");
+						}
+					}
+					onEnd.run();
+				}, blockUpdate);
 	}
 
 }

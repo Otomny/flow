@@ -5,6 +5,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 
 import org.bukkit.Location;
+import org.bukkit.World;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -12,6 +13,15 @@ import lombok.Setter;
 @Getter
 @Setter
 public class StoredLocation {
+
+	/**
+	 * 
+	 * @param location
+	 * @return
+	 */
+	public static StoredLocation fromWorld(int x, int y, int z) {
+		return new StoredLocation(x, y, z);
+	}
 
 	/**
 	 * 
@@ -53,6 +63,10 @@ public class StoredLocation {
 		this.z = z;
 	}
 
+	public Location toLocation(World world) {
+		return new Location(world, x, y, z);
+	}
+
 	public void storeIO(DataOutputStream outputStream) {
 		try {
 			outputStream.writeDouble(x);
@@ -62,4 +76,10 @@ public class StoredLocation {
 			e.printStackTrace();
 		}
 	}
+
+	@Override
+	public String toString() {
+		return "StoredLocation [x=" + x + ", y=" + y + ", z=" + z + "]";
+	}
+
 }
