@@ -17,7 +17,9 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
+    <minecraft.version>1.19.2-R0.1-SNAPSHOT</minecraft.version>
   </properties>
+
   <dependencies>
     <!-- TOOLS -->
     <dependency>
@@ -55,7 +57,7 @@
     <dependency>
       <groupId>org.spigotmc</groupId>
       <artifactId>spigot-api</artifactId>
-      <version>1.19.2-R0.1-SNAPSHOT</version>
+      <version>${minecraft.version}</version>
       <scope>provided</scope>
     </dependency>
     <!-- DATABASES DRIVERS-->
