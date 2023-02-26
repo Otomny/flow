@@ -39,7 +39,7 @@ import fr.omny.flow.api.utils.mongodb.ProxyMongoObject;
 import fr.omny.flow.api.utils.mongodb.ProxyMongoObject.FieldData;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
-import fr.omny.odi.proxy.ProxyMarker;
+import fr.omny.odi.Utils;
 
 public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ProcessInfo {
 
@@ -64,10 +64,14 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 	// Synch utils
 
 	@SuppressWarnings("unchecked")
-	public MongoDBRepository(Class<T> dataClass, Class<ID> idClass, Function<T, ID> mappingFunction,
+	public MongoDBRepository(Class<T> dataClass, Class<ID> idClass,
+			Function<T, ID> mappingFunction,
 			String collectionName,
-			@Autowired RedissonClient redissonClient, @Autowired MongoClient client, @Autowired FlowCodec codecs,
-			@Autowired Dispatcher dispatcher, @Autowired("databaseName") String dbName) {
+			@Autowired RedissonClient redissonClient,
+			@Autowired MongoClient client,
+			@Autowired FlowCodec codecs,
+			@Autowired Dispatcher dispatcher,
+			@Autowired("databaseName") String dbName) {
 		this.dispatcher = dispatcher;
 		this.collectionName = collectionName;
 		this.codecs = codecs;
@@ -89,13 +93,16 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 
 				writer.writeStartDocument();
 				writer.writeName(field.getName());
-				codec.encode(writer, obj, EncoderContext.builder().isEncodingCollectibleDocument(true).build());
+				codec.encode(writer, obj,
+						EncoderContext.builder()
+								.isEncodingCollectibleDocument(true)
+								.build());
 				writer.writeEndDocument();
 
 				ID id = this.getId.apply(data);
 				var json = container.toJson();
-				ObjectUpdate update = new ObjectUpdate(id.toString(), this.collectionName, field.getName(), json,
-						Env.getServerName());
+				ObjectUpdate update = new ObjectUpdate(id.toString(), this.collectionName,
+						field.getName(), json, Env.getServerName());
 
 				Injector.joinpoint(this, "emit", new Object[] { dataClass, topic, update });
 			});
@@ -122,7 +129,9 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 				id = (ID) Integer.valueOf(objectUpdate.getObjectId());
 			}
 			if (id == null) {
-				throw new IllegalStateException("Could not deserialize " + objectUpdate.getObjectId() + " to type " + idClass);
+				throw new IllegalStateException("Could not deserialize " +
+						objectUpdate.getObjectId() +
+						" to type " + idClass);
 			}
 			if (!this.cachedData.containsKey(id)) {
 				return;
@@ -136,17 +145,14 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 				var getter = RepositoryFactory.createGetter(dataClass, field);
 				Document container = Document.parse(objectUpdate.getJsonData());
 				BsonDocumentReader dReader = new BsonDocumentReader(container.toBsonDocument());
-				T object = (T) this.codecs.getCodecRegistries().get(dataClass).decode(dReader,
+				T object = (T) this.codecs.getCodecRegistries().get(dataClass).decode(
+						dReader,
 						DecoderContext.builder().checkedDiscriminator(true).build());
 				setter.apply(objectData, getter.apply(object));
 			} catch (NoSuchFieldException | SecurityException e) {
 				e.printStackTrace();
 			}
 		});
-	}
-
-	protected <S extends T> boolean isProxy(S entity) {
-		return entity instanceof ProxyMarker;
 	}
 
 	@Override
@@ -250,7 +256,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 	@Override
 	public <S extends T> boolean save(S entity) {
 		var id = this.getId.apply(entity);
-		if (isProxy(entity)) {
+		if (Utils.isProxy(entity)) {
 			Bson filter = Filters.eq("_id", id);
 			var result = this.collection.replaceOne(filter, this.cachedData.get(id), UPSERT_OPTIONS);
 			return result.wasAcknowledged();
