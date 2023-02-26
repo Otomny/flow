@@ -59,6 +59,11 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 
 	public abstract String getPackageName();
 
+	@Override
+	public List<String> declaredPackages() {
+		return List.of(getPackageName());
+	}
+
 	public void loadComponents() {
 		var codecs = Injector.getService(FlowCodec.class);
 		codecs.addAll(
