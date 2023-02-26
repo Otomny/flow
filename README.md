@@ -4,23 +4,24 @@ Flow is a Spigot Framework to boost your productivity while coding minecraft plu
 
 **Flow is not recommended for production use as of today**
 
+## Content
+
+- API, usable everywhere
+- Spigot, for spigot development
+- Velocity (upcoming) for proxy development
+
 ## Features
 
 - Aspect Oriented
-- Spring-like Repository
-- Automatic Registering of Listeners & Commands
+  - Auto wiring
+  - Auto registering
+  - Join points
+- Automatic Registering of Listeners, Commands and Runnable
 - Command Components (SubCommand, Arguments, etc...)
-- Multipaper compatible
+- Multipaper compatible by definition with topic listening (with Redis)
 
-## Todo
-### Code
+## TODO
 
-- Fast schematic storage / loading / pasting
-  - Self implementation possible using providers (with @Component)
-  - Block runnable, Chunk runnable, Biome runnable
-- NMS Abstraction
-  - Scoreboard
-  - 
 ### CI
 
 - Automated Tesing

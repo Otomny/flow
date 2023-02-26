@@ -20,6 +20,14 @@ public class PlayerUtils {
 		return () -> player;
 	}
 
+	public static Player unwrap(Sendable sendable) {
+		return ((Playerable) sendable).getPlayer();
+	}
+
+	public static Player unwrap(Playerable playerable) {
+		return playerable.getPlayer();
+	}
+
 	public static FlowPlayer flowPlayer(Player player) {
 		return new FlowPlayer(player);
 	}
