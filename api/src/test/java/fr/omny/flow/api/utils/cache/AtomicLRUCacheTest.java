@@ -1,4 +1,4 @@
-package fr.omny.flow.utils.cache;
+package fr.omny.flow.api.utils.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 

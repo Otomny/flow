@@ -1,16 +1,14 @@
-package fr.omny.flow.utils;
+package fr.omny.flow.api.utils;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 
-import fr.omny.flow.api.utils.Objects;
-
 public class BooleanValueTest {
-	
+
 	@Test
-	public void testBooleanValue(){
+	public void testBooleanValue() {
 		assertFalse(Objects.asBoolean(null));
 		assertTrue(Objects.asBoolean(true));
 		assertFalse(Objects.asBoolean(false));
