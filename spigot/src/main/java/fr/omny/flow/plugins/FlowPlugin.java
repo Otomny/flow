@@ -18,6 +18,7 @@ import fr.omny.flow.api.aop.ClassRegister;
 import fr.omny.flow.api.aop.EnvironmentMethodListener;
 import fr.omny.flow.api.aop.RunOnDev;
 import fr.omny.flow.api.aop.RunOnProd;
+import fr.omny.flow.api.attributes.ProcessInfo;
 import fr.omny.flow.api.data.ObjectUpdate;
 import fr.omny.flow.api.data.implementation.FlowCodec;
 import fr.omny.flow.api.process.Env;
@@ -151,12 +152,16 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));
+		Injector.findEach(ProcessInfo.class::isInstance).map(ProcessInfo.class::cast)
+				.forEach(sInfo -> sInfo.processStart());
 	}
 
 	@Override
 	public void onDisable() {
 		Injector.findEach(ServerInfo.class::isAssignableFrom).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStop(this));
+		Injector.findEach(ProcessInfo.class::isInstance).map(ProcessInfo.class::cast)
+				.forEach(sInfo -> sInfo.processStop());
 		serverStop(this);
 	}
 
