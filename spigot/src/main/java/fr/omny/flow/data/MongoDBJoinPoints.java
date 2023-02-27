@@ -8,7 +8,7 @@ import fr.omny.flow.api.data.implementation.MongoDBRepository;
 import fr.omny.flow.events.data.DataEmitEvent;
 import fr.omny.flow.events.data.KnownDataUpdateEvent;
 import fr.omny.odi.Component;
-import fr.omny.odi.Joinpoint;
+import fr.omny.odi.joinpoint.Joinpoint;
 
 @Component
 public class MongoDBJoinPoints {

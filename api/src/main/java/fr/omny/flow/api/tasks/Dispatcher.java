@@ -17,7 +17,7 @@ public class Dispatcher {
 	Dispatcher() {
 	}
 
-	public Dispatcher(@Autowired("distributed.thread_config.thread_pool_size") int threadPoolSize) {
+	public Dispatcher(@Autowired("distributed.thread_config.thread_pool_size") Integer threadPoolSize) {
 		LoggingThreadFactory threadFactory = new LoggingThreadFactory();
 		this.executor = Executors.newScheduledThreadPool(4, threadFactory);
 	}

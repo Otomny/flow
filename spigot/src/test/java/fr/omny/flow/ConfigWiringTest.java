@@ -1,6 +1,5 @@
 package fr.omny.flow;
 
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -14,6 +13,7 @@ import org.junit.jupiter.api.Test;
 import fr.omny.flow.config.Config;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.DummyFileConfiguration;
+import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
 import lombok.Getter;
@@ -41,6 +41,7 @@ public class ConfigWiringTest {
 		assertEquals("John Doe", service.getWorldName().get());
 
 		assertEquals("Hello world", service.getConstructedConfig());
+		assertEquals("Hello world", service.getAutowiredConfig());
 
 		Injector.wipeTest();
 	}
@@ -49,6 +50,7 @@ public class ConfigWiringTest {
 	public static class Service {
 
 		private String constructedConfig;
+		private String autowiredConfig;
 
 		@Config("name")
 		private String name;
@@ -62,11 +64,13 @@ public class ConfigWiringTest {
 		@Config("im.here")
 		private Optional<String> worldName;
 
+
 		/**
 		 * @param constructedConfig
 		 */
-		public Service(@Config("name") String constructedConfig) {
+		public Service(@Config("name") String constructedConfig, @Autowired("name") String autowiredConfig) {
 			this.constructedConfig = constructedConfig;
+			this.autowiredConfig = autowiredConfig;
 		}
 
 	}

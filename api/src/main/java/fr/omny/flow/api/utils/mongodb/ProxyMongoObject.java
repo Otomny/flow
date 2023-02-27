@@ -1,6 +1,5 @@
 package fr.omny.flow.api.utils.mongodb;
 
-
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -19,19 +18,19 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 
 	public static <T> T createProxySilent(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
 		try {
-			return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(),
-					new ProxyMongoObject<T>(originalInstance, fieldUpdate));
+			return createProxy(originalInstance, fieldUpdate);
 		} catch (Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
 
 	public static <T> T createProxy(T originalInstance, Consumer<FieldData<T>> fieldUpdate) throws Exception {
-		return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(),
+		return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(), originalInstance,
 				new ProxyMongoObject<T>(originalInstance, fieldUpdate));
 	}
 
-	public static record FieldData<T>(T instance, Field field, @Nullable Object oldValue, Object newValue) {}
+	public static record FieldData<T>(T instance, Field field, @Nullable Object oldValue, Object newValue) {
+	}
 
 	private T instance;
 	private Class<? extends T> klass;

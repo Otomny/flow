@@ -1,12 +1,12 @@
 package fr.omny.flow.config;
 
-
 import java.lang.reflect.Field;
 import java.lang.reflect.Parameter;
 import java.util.Optional;
 
 import org.bukkit.configuration.file.FileConfiguration;
 
+import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import fr.omny.odi.listener.OnConstructorCallListener;
 import fr.omny.odi.listener.OnPreWireListener;
@@ -27,24 +27,33 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 				field.setAccessible(true);
 				Config configData = field.getAnnotation(Config.class);
 				String pathToConfigValue = configData.value();
-				try {
-					boolean exists = this.configFile.contains(pathToConfigValue);
-					var currentValue = field.get(instance);
-					if (field.getType() == Optional.class) {
-						if (exists) {
-							field.set(instance, Optional.ofNullable(this.configFile.get(pathToConfigValue, currentValue)));
-						} else {
-							Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
-									+ "' for field '" + field.getName() + "' of class '" + klass.getCanonicalName() + "'"));
-							field.set(instance, Optional.empty());
-						}
-					} else {
-						field.set(instance, this.configFile.get(pathToConfigValue, currentValue));
-					}
-				} catch (Exception e) {
-					throw new RuntimeException(e);
-				}
+				wire(instance, klass, field, pathToConfigValue);
+			} else if (field.isAnnotationPresent(Autowired.class)) {
+				field.setAccessible(true);
+				Autowired autowiredData = field.getAnnotation(Autowired.class);
+				String pathToConfigValue = autowiredData.value();
+				wire(instance, klass, field, pathToConfigValue);
 			}
+		}
+	}
+
+	public void wire(Object instance, Class<?> instanceClass, Field field, String pathToConfigValue) {
+		try {
+			boolean exists = this.configFile.contains(pathToConfigValue);
+			var currentValue = field.get(instance);
+			if (field.getType() == Optional.class) {
+				if (exists) {
+					field.set(instance, Optional.ofNullable(this.configFile.get(pathToConfigValue, currentValue)));
+				} else {
+					Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
+							+ "' for field '" + field.getName() + "' of class '" + instanceClass.getCanonicalName() + "'"));
+					field.set(instance, Optional.empty());
+				}
+			} else {
+				field.set(instance, this.configFile.get(pathToConfigValue, currentValue));
+			}
+		} catch (Exception e) {
+			throw new RuntimeException(e);
 		}
 	}
 
@@ -55,10 +64,19 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 
 	@Override
 	public Object value(Parameter parameter) {
-		if (!parameter.isAnnotationPresent(Config.class))
-			return null;
-		var annotationData = parameter.getAnnotation(Config.class);
-		var pathToConfigValue = annotationData.value();
+		if (parameter.isAnnotationPresent(Config.class)) {
+			var annotationData = parameter.getAnnotation(Config.class);
+			String pathToConfigValue = annotationData.value();
+			return parameterValue(parameter, pathToConfigValue);
+		} else if (parameter.isAnnotationPresent(Autowired.class)) {
+			var annotationData = parameter.getAnnotation(Autowired.class);
+			String pathToConfigValue = annotationData.value();
+			return parameterValue(parameter, pathToConfigValue);
+		}
+		return null;
+	}
+
+	public Object parameterValue(Parameter parameter, String pathToConfigValue) {
 		boolean exists = this.configFile.contains(pathToConfigValue);
 		if (parameter.getType() == Optional.class) {
 			if (exists) {
