@@ -1,11 +1,13 @@
 package fr.omny.flow.translation;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 import org.bukkit.entity.Player;
 
 import fr.omny.flow.api.attributes.Sendable;
+import fr.omny.flow.api.placeholders.Placeholder;
 import fr.omny.flow.api.placeholders.Placeholders;
 import fr.omny.flow.attributes.Playerable;
 import fr.omny.odi.Autowired;
@@ -66,6 +68,20 @@ public class I18N {
 	public <T extends Sendable & Playerable> void send(T player, String key) {
 		String translation = get(player, key);
 		String translationReplaced = placeholders.inject(translation, player);
+		player.send(translationReplaced);
+	}
+
+	/**
+	 * Send a translation to the player
+	 * Apply placeholders transformation to it
+	 * 
+	 * @param player            The player
+	 * @param key               The translation key
+	 * @param paramPlaceholders The placeholders parameters
+	 */
+	public <T extends Sendable & Playerable> void send(T player, String key, List<Placeholder> paramPlaceholders) {
+		String translation = get(player, key);
+		String translationReplaced = placeholders.inject(translation, player, paramPlaceholders);
 		player.send(translationReplaced);
 	}
 
