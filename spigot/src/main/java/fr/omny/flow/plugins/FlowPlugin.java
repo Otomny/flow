@@ -94,6 +94,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 		String packageName = getPackageName();
 		// Init all component instance
 		Injector.startApplication(FlowPlugin.class, getLogger());
+		Injector.addService(FlowPlugin.class, this);
 		Injector.addFrom("fr.omny.flow");
 		// Load external components from others libraries
 		loadComponents();
