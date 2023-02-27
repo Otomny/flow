@@ -280,6 +280,14 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 	}
 
 	@Override
+	public List<Document> executeQuery(Bson filter, Bson projection) {
+		return this.collection
+				.find(filter, Document.class)
+				.projection(projection)
+				.into(new ArrayList<>());
+	}
+
+	@Override
 	public void processStart() {
 
 	}
