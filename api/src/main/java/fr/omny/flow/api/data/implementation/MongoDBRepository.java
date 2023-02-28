@@ -111,7 +111,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 		this.topic = redissonClient.getTopic("repository_" + this.collectionName);
 		this.topic.addListener(ObjectUpdate.class, (channel, objectUpdate) -> {
 
-			Injector.joinpoint(this, "update", new Object[] { objectUpdate });
+			Injector.joinpoint(this, "update", new Object[] { dataClass, topic, objectUpdate });
 			// var event = new KnownDataUpdateEvent(this, this.dataClass, objectUpdate);
 			// Bukkit.getServer().getPluginManager().callEvent(event);
 			ID id = null;
