@@ -25,7 +25,7 @@ public class CmdClassRegister implements ClassRegister {
 	@Override
 	public List<Object> register(FlowProcess process) {
 		Predicate<PreClass> commandsFilter = preClass -> preClass.isSuperClass(Cmd.class) && preClass.isNotByteBuddy();
-		Set<Class<?>> commands = Stream.concat(getDeclared(process, commandsFilter),
+		Set<Class<?>> commands = Stream.concat(ClassRegister.getDeclared(process, commandsFilter),
 				Utils.getClasses("fr.omny.flow", commandsFilter).stream()).collect(Collectors.toSet());
 
 		Plugin plugin = (Plugin) process;

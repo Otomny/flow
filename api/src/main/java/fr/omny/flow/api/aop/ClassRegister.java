@@ -13,7 +13,7 @@ import fr.omny.odi.utils.PreClass;
  */
 public interface ClassRegister {
 	
-	default Stream<Class<?>> getDeclared(FlowProcess plugin, Predicate<PreClass> predicate) {
+	static Stream<Class<?>> getDeclared(FlowProcess plugin, Predicate<PreClass> predicate) {
 		return plugin.declaredPackages().stream()
 				.flatMap(packageName -> Utils.getClasses(packageName,
 						klass -> predicate.test(klass) && klass.isNotByteBuddy())

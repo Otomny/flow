@@ -31,7 +31,7 @@ public class PlaceholderClassRegister implements ClassRegister {
 				&& preClass.isNotByteBuddy();
 
 		Set<Class<?>> placeholderProviderClasses = Stream
-				.concat(getDeclared(process, placeholderFilter),
+				.concat(ClassRegister.getDeclared(process, placeholderFilter),
 						Utils.getClasses("fr.omny.flow", placeholderFilter).stream())
 				.collect(Collectors.toSet());
 

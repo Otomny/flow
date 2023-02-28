@@ -31,7 +31,7 @@ public class ListenerProviderClassRegister implements ClassRegister {
 
 		// Listeners providers
 		Set<Class<?>> listenerProviders = Stream
-				.concat(getDeclared(process, listenerProviderFilter),
+				.concat(ClassRegister.getDeclared(process, listenerProviderFilter),
 						Utils.getClasses("fr.omny.flow", listenerProviderFilter).stream())
 				.collect(Collectors.toSet());
 

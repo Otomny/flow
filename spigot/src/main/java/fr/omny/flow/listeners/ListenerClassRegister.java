@@ -28,7 +28,7 @@ public class ListenerClassRegister implements ClassRegister {
 				&& preClass.isNotByteBuddy();
 
 		// No duplicate
-		Set<Class<?>> listeners = Stream.concat(getDeclared(process, listenerFilter),
+		Set<Class<?>> listeners = Stream.concat(ClassRegister.getDeclared(process, listenerFilter),
 				Utils.getClasses("fr.omny.flow", listenerFilter).stream()).collect(Collectors.toSet());
 
 		Plugin plugin = (Plugin) process;

@@ -150,6 +150,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 			Injector.wire(obj);
 			classRegister.postWire(obj);
 		}));
+		Injector.findEach(Predicates.alwaysTrue()).forEach(Injector::wire);
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));

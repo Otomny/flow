@@ -28,7 +28,7 @@ public class RunnableClassRegister implements ClassRegister {
 				&& preClass.isInterfacePresent(Runnable.class) && preClass.isAnnotationPresent(RunnableConfig.class)
 				&& preClass.isNotByteBuddy();
 
-		Set<Class<?>> runnableClasses = Stream.concat(getDeclared(process, runnablePredicate),
+		Set<Class<?>> runnableClasses = Stream.concat(ClassRegister.getDeclared(process, runnablePredicate),
 				Utils.getClasses("fr.omny.flow", runnablePredicate).stream()).collect(Collectors.toSet());
 
 		Plugin plugin = (Plugin) process;
