@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 
 import fr.omny.flow.api.attributes.Sendable;
@@ -66,9 +67,7 @@ public class I18N {
 	 * @param key    The translation key
 	 */
 	public <T extends Sendable & Playerable> void send(T player, String key) {
-		String translation = get(player, key);
-		String translationReplaced = placeholders.inject(translation, player);
-		player.send(translationReplaced);
+		send(player, key, List.of());
 	}
 
 	/**
@@ -82,7 +81,7 @@ public class I18N {
 	public <T extends Sendable & Playerable> void send(T player, String key, List<Placeholder> paramPlaceholders) {
 		String translation = get(player, key);
 		String translationReplaced = placeholders.inject(translation, player, paramPlaceholders);
-		player.send(translationReplaced);
+		player.send(ChatColor.translateAlternateColorCodes('&', translationReplaced));
 	}
 
 	/**
