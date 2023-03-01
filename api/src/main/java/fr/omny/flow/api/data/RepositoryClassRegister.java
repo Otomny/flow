@@ -36,7 +36,7 @@ public class RepositoryClassRegister implements ClassRegister {
 				@SuppressWarnings("unchecked")
 				Object repositoryInstance = RepositoryFactory.createRepository(sKlass);
 				generated.add(repositoryInstance);
-				Injector.addService(implementationClass, repositoryInstance);
+				Injector.addService(implementationClass, repositoryInstance, true);
 			}
 		}
 		return generated;
@@ -44,6 +44,7 @@ public class RepositoryClassRegister implements ClassRegister {
 
 	@Override
 	public void postWire(Object object) {
+		Injector.wire(object);
 	}
 
 }

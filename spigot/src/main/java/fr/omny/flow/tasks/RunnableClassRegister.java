@@ -45,7 +45,7 @@ public class RunnableClassRegister implements ClassRegister {
 				var bukkitRunnable = (Runnable) Utils.callConstructor(klass);
 
 				Injector.wire(bukkitRunnable);
-				Injector.addService(klass, name, bukkitRunnable);
+				Injector.addService(klass, name, bukkitRunnable, true);
 
 				if (type == SchedulerType.BUKKIT) {
 					if (isAsync) {
@@ -81,6 +81,7 @@ public class RunnableClassRegister implements ClassRegister {
 
 	@Override
 	public void postWire(Object object) {
+		Injector.wire(object);
 	}
 
 }

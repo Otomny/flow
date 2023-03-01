@@ -13,7 +13,7 @@ import fr.omny.flow.attributes.Playerable;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Component;
 
-@Component
+@Component(proxy = false)
 public class I18N {
 
 	@Autowired

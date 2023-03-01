@@ -30,7 +30,7 @@ public class ListenerClassRegister implements ClassRegister {
 				Object listenerInstance = Utils.callConstructor(implementationClass);
 
 				generated.add(listenerInstance);
-				Injector.addService(implementationClass, listenerInstance);
+				Injector.addService(implementationClass, listenerInstance, true);
 
 				server.getEventManager().register(plugin, listenerInstance);
 

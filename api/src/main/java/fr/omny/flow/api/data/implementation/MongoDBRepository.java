@@ -39,7 +39,7 @@ import fr.omny.flow.api.utils.mongodb.ProxyMongoObject;
 import fr.omny.flow.api.utils.mongodb.ProxyMongoObject.FieldData;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
-import fr.omny.odi.Utils;
+import fr.omny.odi.proxy.ProxyFactory;
 
 public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ProcessInfo {
 
@@ -254,18 +254,16 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 	}
 
 	@Override
-	public <S extends T> boolean save(S entity) {
-		var id = this.getId.apply(entity);
-		if (Utils.isProxy(entity)) {
-			Bson filter = Filters.eq("_id", id);
-			var result = this.collection.replaceOne(filter, this.cachedData.get(id), UPSERT_OPTIONS);
-			return result.wasAcknowledged();
-		} else {
-			Bson filter = Filters.eq("_id", id);
-			var result = this.collection.replaceOne(filter, entity, UPSERT_OPTIONS);
-			return result.wasAcknowledged();
+	@SuppressWarnings("unchecked")
+	public <S extends T> boolean save(S sEntity) {
+		var id = this.getId.apply(sEntity);
+		S entity = (S) ProxyFactory.getOriginalInstance(sEntity);
+		Bson filter = Filters.eq("_id", id);
+		var result = this.collection.replaceOne(filter, entity, UPSERT_OPTIONS);
+		if (result.wasAcknowledged()) {
+			this.cachedData.remove(id);
 		}
-
+		return result.wasAcknowledged();
 	}
 
 	@Override

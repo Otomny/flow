@@ -26,6 +26,7 @@ import fr.omny.flow.api.process.FlowProcess;
 import fr.omny.flow.attributes.ServerInfo;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.events.data.DataUpdateEvent;
+import fr.omny.flow.translation.I18N;
 import fr.omny.flow.utils.NMS;
 import fr.omny.flow.utils.mongodb.codecs.ItemStackCodec;
 import fr.omny.flow.utils.mongodb.codecs.LocationCodec;
@@ -62,7 +63,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 
 	@Override
 	public List<String> declaredPackages() {
-		return List.of(getPackageName());
+		return List.of("fr.omny.flow", getPackageName());
 	}
 
 	public void loadComponents() {
@@ -94,7 +95,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 		String packageName = getPackageName();
 		// Init all component instance
 		Injector.startApplication(FlowPlugin.class, getLogger());
-		Injector.addService(FlowPlugin.class, this);
+		Injector.addService(FlowPlugin.class, this, true);
 		Injector.addFrom("fr.omny.flow");
 		// Load external components from others libraries
 		loadComponents();
@@ -156,6 +157,7 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 				.forEach(sInfo -> sInfo.serverStart(this));
 		Injector.findEach(ProcessInfo.class::isInstance).map(ProcessInfo.class::cast)
 				.forEach(sInfo -> sInfo.processStart());
+		Injector.wire(Injector.getService(I18N.class));
 	}
 
 	@Override
