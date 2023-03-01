@@ -13,6 +13,7 @@ import fr.omny.flow.api.placeholders.Placeholders;
 import fr.omny.flow.attributes.Playerable;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Component;
+import lombok.Setter;
 
 @Component(proxy = false)
 public class I18N {
@@ -23,6 +24,8 @@ public class I18N {
 	private Optional<PlayerToLocaleProvider> provider;
 	@Autowired
 	private Placeholders placeholders;
+	@Setter
+	private boolean debug = false;
 
 	public I18N() {
 	}
@@ -79,9 +82,38 @@ public class I18N {
 	 * @param paramPlaceholders The placeholders parameters
 	 */
 	public <T extends Sendable & Playerable> void send(T player, String key, List<Placeholder> paramPlaceholders) {
+		if (debug) {
+			var locale = getLocale(player.getPlayer());
+			player.send("§f[" + locale + ":" + key + "]> " + getTranslation(player, key, paramPlaceholders));
+		} else {
+			player.send(getTranslation(player, key, paramPlaceholders));
+		}
+	}
+
+	/**
+	 * 
+	 * @param <T>
+	 * @param player
+	 * @param key
+	 * @return
+	 */
+	public <T extends Sendable & Playerable> String getTranslation(T player, String key) {
+		return getTranslation(player, key, List.of());
+	}
+
+	/**
+	 * 
+	 * @param <T>
+	 * @param player
+	 * @param key
+	 * @param paramPlaceholders
+	 * @return
+	 */
+	public <T extends Sendable & Playerable> String getTranslation(T player, String key,
+			List<Placeholder> paramPlaceholders) {
 		String translation = get(player, key);
 		String translationReplaced = placeholders.inject(translation, player, paramPlaceholders);
-		player.send(ChatColor.translateAlternateColorCodes('&', translationReplaced));
+		return ChatColor.translateAlternateColorCodes('&', translationReplaced);
 	}
 
 	/**
