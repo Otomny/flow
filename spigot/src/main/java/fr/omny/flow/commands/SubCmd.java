@@ -7,9 +7,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 
 import org.bukkit.command.CommandSender;
 
+import fr.omny.flow.commands.arguments.SentenceArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
 import fr.omny.odi.Injector;
 import lombok.Getter;
@@ -104,14 +106,23 @@ public abstract class SubCmd implements CommandComponent {
 				String textValue = args[index];
 				for (CommandComponent comp : components) {
 					if (comp instanceof CmdArgument<?> cmdArgument) {
-						var value = cmdArgument.getValue(textValue, sender, arguments);
-						if (value.isPresent()) {
-							arguments.put(index, value.get());
-							continue CompLoop;
+						// Specific component
+						if (cmdArgument instanceof SentenceArgument setence) {
+							int from = index;
+							int to = args.length;
+							var sentence = String.join(" ", IntStream.range(from, to).mapToObj(i -> args[i]).toList());
+							arguments.put(index, sentence);
+							break CompLoop;
+						} else {
+							var value = cmdArgument.getValue(textValue, sender, arguments);
+							if (value.isPresent()) {
+								arguments.put(index, value.get());
+								continue CompLoop;
+							}
 						}
 					} else if (comp instanceof SubCmd subCmd) {
 						if (textValue.equalsIgnoreCase(subCmd.getName())) {
-							return subCmd.execute(sender, Arrays.copyOfRange(args, index, args.length));
+							return subCmd.execute(sender, Arrays.copyOfRange(args, index + 1, args.length));
 						}
 					}
 				}
