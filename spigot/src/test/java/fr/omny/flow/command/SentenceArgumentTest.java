@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import fr.omny.flow.commands.Cmd;
 import fr.omny.flow.commands.arguments.IntegerArgument;
 import fr.omny.flow.commands.arguments.SentenceArgument;
+import fr.omny.flow.commands.arguments.StringArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
 import fr.omny.flow.entity.DummyCommandSender;
 import fr.omny.odi.Injector;
@@ -38,20 +39,22 @@ public class SentenceArgumentTest {
 		var result = cmd.execute(sender, "dummy", new String[] {});
 		assertFalse(result);
 		assertNull(cmd.args);
-		assertEquals("§cUsage: /dummy <Count> <Sentence>", sender.getReceivedMessages().get(0));
+		assertEquals("§cUsage: /dummy <Count> <String> <Sentence>", sender.getReceivedMessages().get(0));
 	}
 
 	@Test
 	public void test_ExecuteCommand_Arguments() {
 		var sender = new DummyCommandSender();
 		var cmd = new DummyCommand();
-		var result = cmd.execute(sender, "dummy", "51 Hello world !".split("\\s+"));
+		var result = cmd.execute(sender, "dummy", "51 tree Hello world !".split("\\s+"));
 		assertTrue(result);
-		assertEquals(2, cmd.getArgs().count());
+		assertEquals(3, cmd.getArgs().count());
 		assertTrue(cmd.getArgs().isPresent(0, Integer.class));
 		assertTrue(cmd.getArgs().isPresent(1, String.class));
+		assertTrue(cmd.getArgs().isPresent(2, String.class));
 		assertEquals(Integer.valueOf(51), cmd.getArgs().get(0, Integer.class));
-		assertEquals("Hello world !", cmd.getArgs().get(1, String.class));
+		assertEquals("tree", cmd.getArgs().get(1, String.class));
+		assertEquals("Hello world !", cmd.getArgs().get(2, String.class));
 	}
 
 	public static class DummyCommand extends Cmd {
@@ -62,7 +65,8 @@ public class SentenceArgumentTest {
 		public DummyCommand() {
 			super("dummy");
 			rc(0, new IntegerArgument("Count", false));
-			rc(1, new SentenceArgument("Sentence", false));
+			rc(1, new StringArgument("String", false));
+			rc(2, new SentenceArgument("Sentence", false));
 		}
 
 		@Override
