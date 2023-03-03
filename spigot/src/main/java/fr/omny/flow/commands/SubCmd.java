@@ -1,23 +1,34 @@
 package fr.omny.flow.commands;
 
-
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import fr.omny.flow.commands.arguments.SentenceArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
+import fr.omny.flow.player.PermissionProvider;
+import fr.omny.flow.translation.I18N;
+import fr.omny.flow.utils.PlayerUtils;
+import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import lombok.Getter;
 import lombok.Setter;
 
 public abstract class SubCmd implements CommandComponent {
+
+	@Autowired
+	private Optional<I18N> translator;
+
+	@Autowired
+	private PermissionProvider permissionProvider;
 
 	@Getter
 	private Map<Integer, List<CommandComponent>> comps;
@@ -91,6 +102,12 @@ public abstract class SubCmd implements CommandComponent {
 	 * @return
 	 */
 	public boolean execute(CommandSender sender, String[] args) {
+		if (sender instanceof Player player) {
+			if (!permissionProvider.hasPermission(player, this.getPermission())) {
+				translator.ifPresent(i18n -> i18n.send(PlayerUtils.flowPlayer(player), Cmd.NO_PERM));
+				return false;
+			}
+		}
 		Arguments arguments = new Arguments();
 
 		// Main loop
@@ -155,6 +172,9 @@ public abstract class SubCmd implements CommandComponent {
 
 	public List<String> tabComplete(CommandSender sender, String[] args) {
 		List<String> array = new ArrayList<>();
+		if (sender instanceof Player player)
+			if (!permissionProvider.hasPermission(player, this.getPermission()))
+				return array;
 
 		int depth = args.length == 0 ? 0 : args.length - 1;
 		String lastWord = args.length == 0 ? "" : args[args.length - 1];
@@ -171,6 +191,11 @@ public abstract class SubCmd implements CommandComponent {
 		if (components != null) {
 			components.stream().map(s -> {
 				if (s instanceof SubCmd subCmd) {
+					if (sender instanceof Player player) {
+						if (!permissionProvider.hasPermission(player, subCmd.getPermission())) {
+							return new ArrayList<String>();
+						}
+					}
 					return List.of(subCmd.getName());
 				} else if (s instanceof CmdArgument<?> cmdArgument) {
 					return cmdArgument.getValues(sender, new Arguments());

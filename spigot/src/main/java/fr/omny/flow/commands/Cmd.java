@@ -12,21 +12,29 @@ import java.util.stream.IntStream;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.entity.Player;
 
 import fr.omny.flow.commands.arguments.SentenceArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
+import fr.omny.flow.player.PermissionProvider;
 import fr.omny.flow.translation.I18N;
+import fr.omny.flow.utils.PlayerUtils;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import lombok.Getter;
 
 public abstract class Cmd extends Command implements CommandComponent {
 
+	public static String NO_PERM = "no_perm";
+
 	@Getter
 	private Map<Integer, List<CommandComponent>> comps;
 
 	@Autowired
 	private Optional<I18N> translator;
+
+	@Autowired
+	private PermissionProvider permissionProvider;
 
 	/**
 	 * @param name
@@ -102,10 +110,12 @@ public abstract class Cmd extends Command implements CommandComponent {
 
 	@Override
 	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
-		// "/test a b c"
-		// commandLabel = test
-		// args= [a, b, c]
-		// arg 0
+		if (sender instanceof Player player) {
+			if (!permissionProvider.hasPermission(player, this.getPermission())) {
+				translator.ifPresent(i18n -> i18n.send(PlayerUtils.flowPlayer(player), Cmd.NO_PERM));
+				return false;
+			}
+		}
 
 		Arguments arguments = new Arguments();
 
@@ -178,6 +188,9 @@ public abstract class Cmd extends Command implements CommandComponent {
 	@Override
 	public List<String> tabComplete(CommandSender sender, String alias, String[] args) throws IllegalArgumentException {
 		List<String> array = new ArrayList<>();
+		if (sender instanceof Player player)
+			if (!permissionProvider.hasPermission(player, this.getPermission()))
+				return array;
 
 		int depth = args.length == 0 ? 0 : args.length - 1;
 		String lastWord = args.length == 0 ? "" : args[args.length - 1];
@@ -197,6 +210,11 @@ public abstract class Cmd extends Command implements CommandComponent {
 		if (components != null) {
 			components.stream().map(s -> {
 				if (s instanceof SubCmd subCmd) {
+					if (sender instanceof Player player) {
+						if (!permissionProvider.hasPermission(player, subCmd.getPermission())) {
+							return new ArrayList<String>();
+						}
+					}
 					return List.of(subCmd.getName());
 				} else if (s instanceof CmdArgument<?> cmdArgument) {
 					return cmdArgument.getValues(sender, new Arguments());
