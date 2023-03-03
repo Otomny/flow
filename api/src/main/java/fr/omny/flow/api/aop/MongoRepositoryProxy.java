@@ -14,6 +14,7 @@ import fr.omny.flow.api.data.CrudRepository;
 import fr.omny.flow.api.data.implementation.MongoDBRepository;
 import fr.omny.flow.api.data.query.MongoQuery;
 import fr.omny.odi.Utils;
+import fr.omny.odi.proxy.ProxyMarker;
 
 public class MongoRepositoryProxy implements InvocationHandler {
 
@@ -22,21 +23,25 @@ public class MongoRepositoryProxy implements InvocationHandler {
 			Class<? extends T> dataClass,
 			CrudRepository<T, ID> crudRepository) {
 		return (C) Proxy.newProxyInstance(
-				proxyClass.getClassLoader(), new Class[] { proxyClass },
+				proxyClass.getClassLoader(), new Class[] { proxyClass, ProxyMarker.class },
 				new MongoRepositoryProxy(proxyClass, dataClass, crudRepository));
 	}
 
 	private CrudRepository<?, ?> repo;
+	private Class<? extends CrudRepository<?, ?>> repoClass;
+
 	private Class<?> proxiedClass;
 	private Map<Method, Method> mappedMethod;
 	private Method executeQuery;
 
+	@SuppressWarnings("unchecked")
 	public MongoRepositoryProxy(Class<?> proxiedClass, Class<?> dataClass,
 			CrudRepository<?, ?> crudRepository) {
 		this.proxiedClass = proxiedClass;
+		this.repoClass = (Class<? extends CrudRepository<?, ?>>) crudRepository.getClass();
 		this.repo = crudRepository;
 		this.mappedMethod = new HashMap<>();
-		this.executeQuery = Utils.findByName(MongoDBRepository.class, "executeQuery");
+		this.executeQuery = Utils.findMethod(MongoDBRepository.class, m -> m.getName().equals("executeQuery"));
 	}
 
 	private Bson createProjection(Method method, MongoQuery query,
@@ -53,6 +58,12 @@ public class MongoRepositoryProxy implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] arguments)
 			throws Throwable {
 		String methodName = method.getName();
+		if (methodName.equalsIgnoreCase("getOriginalClass")) {
+			return this.repoClass;
+		} else if (methodName.equalsIgnoreCase("getOriginalInstance")) {
+			return this.repo;
+		}
+
 		int argumentsCount = arguments == null ? 0 : arguments.length;
 
 		if (method.getName().equals(this.executeQuery.getName())) {
