@@ -1,84 +1,91 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-    xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>fr.omny</groupId>
-        <artifactId>flow</artifactId>
-        <version>1.0</version>
-    </parent>
-
-    <artifactId>flow-spigot</artifactId>
+  <parent>
+    <groupId>fr.omny</groupId>
+    <artifactId>flow</artifactId>
     <version>1.0</version>
-    <packaging>jar</packaging>
+  </parent>
 
-    <name>Flow SPIGOT</name>
-    <description>Flow is a full framework for spigot plugin development</description>
-    <url>https://otomny.fr</url>
+  <artifactId>flow-spigot</artifactId>
+  <version>1.0</version>
+  <packaging>jar</packaging>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>17</maven.compiler.source>
-        <maven.compiler.target>17</maven.compiler.target>
-    </properties>
-    <dependencies>
-        <!-- OMNY -->
-        <dependency>
-            <groupId>fr.omny</groupId>
-            <artifactId>guis</artifactId>
-            <version>1.0-SNAPSHOT</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- FLOW -->
-        <dependency>
-            <groupId>fr.omny</groupId>
-            <artifactId>flow-api</artifactId>
-            <version>1.0</version>
-            <scope>compile</scope>
-        </dependency>
-        <!-- MINECRAFT -->
-        <dependency>
-            <groupId>org.spigotmc</groupId>
-            <artifactId>spigot-api</artifactId>
-            <version>${minecraft.version}</version>
-            <scope>provided</scope>
-        </dependency>
-    </dependencies>
+  <name>Flow SPIGOT</name>
+  <description>Flow is a full framework for spigot plugin development</description>
+  <url>https://otomny.fr</url>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-                <version>3.2.1</version>
-                <executions>
-                    <execution>
-                        <id>attach-sources</id>
-                        <phase>verify</phase>
-                        <goals>
-                            <goal>jar-no-fork</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-surefire-plugin</artifactId>
-                <version>3.0.0-M1</version>
-                <executions>
-                    <execution>
-                        <phase>test</phase>
-                    </execution>
-                </executions>
-                <configuration>
-                    <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens
-                        java.base/java.lang=ALL-UNNAMED</argLine>
-                    <redirectTestOutputToFile>true</redirectTestOutputToFile>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <repositories>
+    <repository>
+      <id>papermc</id>
+      <url>https://repo.papermc.io/repository/maven-public/</url>
+    </repository>
+  </repositories>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>17</maven.compiler.source>
+    <maven.compiler.target>17</maven.compiler.target>
+  </properties>
+  <dependencies>
+    <!-- OMNY -->
+    <dependency>
+      <groupId>fr.omny</groupId>
+      <artifactId>guis</artifactId>
+      <version>1.0-SNAPSHOT</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- FLOW -->
+    <dependency>
+      <groupId>fr.omny</groupId>
+      <artifactId>flow-api</artifactId>
+      <version>1.0</version>
+      <scope>compile</scope>
+    </dependency>
+    <!-- MINECRAFT -->
+    <dependency>
+      <groupId>io.papermc.paper</groupId>
+      <artifactId>paper-api</artifactId>
+      <version>${minecraft.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-source-plugin</artifactId>
+        <version>3.2.1</version>
+        <executions>
+          <execution>
+            <id>attach-sources</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>jar-no-fork</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.0.0-M1</version>
+        <executions>
+          <execution>
+            <phase>test</phase>
+          </execution>
+        </executions>
+        <configuration>
+          <argLine>--add-opens java.base/java.util=ALL-UNNAMED --add-opens
+            java.base/java.lang=ALL-UNNAMED</argLine>
+          <redirectTestOutputToFile>true</redirectTestOutputToFile>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>

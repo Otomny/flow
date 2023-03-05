@@ -11,11 +11,13 @@ import org.bukkit.permissions.Permission;
 import org.bukkit.permissions.PermissionAttachment;
 import org.bukkit.permissions.PermissionAttachmentInfo;
 import org.bukkit.plugin.Plugin;
+import org.jetbrains.annotations.NotNull;
 
 import lombok.Getter;
+import net.kyori.adventure.text.Component;
 
 @Getter
-public class DummyCommandSender implements CommandSender{
+public class DummyCommandSender implements CommandSender {
 
 	private List<String> receivedMessages = new ArrayList<>();
 
@@ -69,13 +71,13 @@ public class DummyCommandSender implements CommandSender{
 	@Override
 	public void recalculatePermissions() {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
 	public void removeAttachment(PermissionAttachment arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -86,7 +88,7 @@ public class DummyCommandSender implements CommandSender{
 	@Override
 	public void setOp(boolean arg0) {
 		// TODO Auto-generated method stub
-		
+
 	}
 
 	@Override
@@ -111,17 +113,22 @@ public class DummyCommandSender implements CommandSender{
 
 	@Override
 	public void sendMessage(UUID arg0, String arg1) {
-		
+
 	}
 
 	@Override
 	public void sendMessage(UUID arg0, String... arg1) {
-		
+
 	}
 
 	@Override
 	public Spigot spigot() {
 		return null;
 	}
-	
+
+	@Override
+	public @NotNull Component name() {
+		return Component.text("DummyCommandSender");
+	}
+
 }
