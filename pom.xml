@@ -20,8 +20,14 @@
     <minecraft.version>1.19.2-R0.1-SNAPSHOT</minecraft.version>
     <testcontainers.version>1.17.6</testcontainers.version>
   </properties>
-
+  
   <dependencies>
+    <dependency>
+      <groupId>net.kyori</groupId>
+      <artifactId>adventure-api</artifactId>
+      <version>4.12.0</version>
+      <scope>provided</scope>
+    </dependency>
     <!-- TOOLS -->
     <dependency>
       <groupId>org.projectlombok</groupId>
