@@ -76,9 +76,9 @@ public class RepositoryFactory {
 			var dataType = classes[0];
 			var keyType = classes[1];
 			Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
-			String collectionName = repositoryData.name().equals("__class")
+			String collectionName = repositoryData.value().equals("__class")
 					? StrUtils.toSnakeCase(dataType.getSimpleName())
-					: repositoryData.name();
+					: repositoryData.value();
 			return Utils.callConstructor(
 					InMemoryRepository.class, false, dataType, keyType, collectionName,
 					mappingFactory(repositoryClass, JavaRepository.class));
@@ -113,9 +113,9 @@ public class RepositoryFactory {
 		var dataType = (Class<? extends T>) classes[0];
 		var keyType = classes[1];
 		Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
-		String collectionName = repositoryData.name().equals("__class")
+		String collectionName = repositoryData.value().equals("__class")
 				? StrUtils.toSnakeCase(dataType.getSimpleName())
-				: repositoryData.name();
+				: repositoryData.value();
 		try {
 			return (C) MongoRepositoryProxy.createRepositoryProxy(
 					repositoryClass, dataType,
@@ -153,9 +153,9 @@ public class RepositoryFactory {
 		var dataType = classes[0];
 		var keyType = classes[1];
 		Repository repositoryData = repositoryClass.getAnnotation(Repository.class);
-		String collectionName = repositoryData.name().equals("__class")
+		String collectionName = repositoryData.value().equals("__class")
 				? StrUtils.toSnakeCase(dataType.getSimpleName())
-				: repositoryData.name();
+				: repositoryData.value();
 		try {
 			return Utils.callConstructor(
 					RedissonRepository.class, false, dataType, keyType, collectionName,
