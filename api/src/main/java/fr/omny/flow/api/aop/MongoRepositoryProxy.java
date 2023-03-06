@@ -2,56 +2,84 @@ package fr.omny.flow.api.aop;
 
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
-import org.bson.conversions.Bson;
+import org.bson.Document;
+
+import com.mongodb.client.model.Filters;
 
 import fr.omny.flow.api.data.CrudRepository;
-import fr.omny.flow.api.data.implementation.MongoDBRepository;
-import fr.omny.flow.api.data.query.MongoQuery;
+import fr.omny.flow.api.data.MongoRepository;
+import fr.omny.flow.api.utils.StrUtils;
 import fr.omny.odi.Utils;
 import fr.omny.odi.proxy.ProxyMarker;
 
 public class MongoRepositoryProxy implements InvocationHandler {
 
 	@SuppressWarnings("unchecked")
-	public static <T, ID, C extends CrudRepository<T, ID>> C createRepositoryProxy(Class<? extends C> proxyClass,
+	public static <T, ID, C extends MongoRepository<T, ID>> C createRepositoryProxy(Class<? extends C> proxyClass,
 			Class<? extends T> dataClass,
-			CrudRepository<T, ID> crudRepository) {
+			C crudRepository) {
 		return (C) Proxy.newProxyInstance(
 				proxyClass.getClassLoader(), new Class[] { proxyClass, ProxyMarker.class },
 				new MongoRepositoryProxy(proxyClass, dataClass, crudRepository));
 	}
 
-	private CrudRepository<?, ?> repo;
-	private Class<? extends CrudRepository<?, ?>> repoClass;
+	public static CrudRepository<?, ?> createRepositoryProxy(Class<? extends CrudRepository<?, ?>> proxyClass,
+			Class<?> dataClass, CrudRepository<?, ?> crudRepository) {
+		return (CrudRepository<?, ?>) Proxy.newProxyInstance(
+				proxyClass.getClassLoader(), new Class[] { proxyClass, ProxyMarker.class },
+				new MongoRepositoryProxy(proxyClass, dataClass, (MongoRepository<?, ?>) crudRepository));
+	}
+
+	private MongoRepository<?, ?> repo;
+	private Class<? extends MongoRepository<?, ?>> repoClass;
 
 	private Class<?> proxiedClass;
 	private Map<Method, Method> mappedMethod;
+	private Map<String, Function<Object[], Object>> mappedCustomQuery;
 	private Method executeQuery;
 
 	@SuppressWarnings("unchecked")
 	public MongoRepositoryProxy(Class<?> proxiedClass, Class<?> dataClass,
-			CrudRepository<?, ?> crudRepository) {
+			MongoRepository<?, ?> crudRepository) {
 		this.proxiedClass = proxiedClass;
-		this.repoClass = (Class<? extends CrudRepository<?, ?>>) crudRepository.getClass();
+		this.repoClass = (Class<? extends MongoRepository<?, ?>>) crudRepository.getClass();
 		this.repo = crudRepository;
 		this.mappedMethod = new HashMap<>();
-		this.executeQuery = Utils.findMethod(MongoDBRepository.class, m -> m.getName().equals("executeQuery"));
-	}
+		this.mappedCustomQuery = new HashMap<>();
+		this.executeQuery = Utils.findMethod(crudRepository.getClass(), m -> m.getName().equals("executeQuery"));
 
-	private Bson createProjection(Method method, MongoQuery query,
-			Object[] arguments) {
-		throw new UnsupportedOperationException();
-	}
-
-	private Bson createFilter(Method method, MongoQuery query,
-			Object[] arguments) {
-		throw new UnsupportedOperationException();
+		// Create mapped custom query
+		// found all fields
+		for (Field field : dataClass.getDeclaredFields()) {
+			Method foundMethod = Utils.findMethod(proxiedClass,
+					method -> method.getName().equals("findBy" + StrUtils.capitalize(field.getName()))
+							&& method.getReturnType().equals(Optional.class));
+			if (foundMethod != null) {
+				mappedCustomQuery.put(foundMethod.getName(), parameters -> {
+					Object result = this.repo.executeQueryOne(Filters.eq(field.getName(), parameters[0]), new Document());
+					return Optional.ofNullable(result);
+				});
+			}
+			foundMethod = Utils.findMethod(proxiedClass,
+					method -> method.getName().equals("findAllBy" + StrUtils.capitalize(field.getName()))
+							&& method.getReturnType().equals(Iterable.class));
+			if (foundMethod != null) {
+				mappedCustomQuery.put(foundMethod.getName(), parameters -> {
+					List<?> result = this.repo.executeQuery(Filters.eq(field.getName(), parameters[0]), new Document());
+					return result;
+				});
+			}
+		}
 	}
 
 	@Override
@@ -64,21 +92,17 @@ public class MongoRepositoryProxy implements InvocationHandler {
 			return this.repo;
 		}
 
-		int argumentsCount = arguments == null ? 0 : arguments.length;
-
-		if (method.getName().equals(this.executeQuery.getName())) {
-			return this.executeQuery.invoke(this.repo, arguments);
-		}
-		if (method.isAnnotationPresent(MongoQuery.class)) {
-			var queryData = method.getAnnotation(MongoQuery.class);
-			var filter = createFilter(method, queryData, arguments);
-			var projection = createProjection(method, queryData, arguments);
-
-			return this.executeQuery.invoke(repo, filter, projection);
-		}
 		if (this.mappedMethod.containsKey(method)) {
 			return this.mappedMethod.get(method).invoke(repo, arguments);
 		}
+		if (this.mappedCustomQuery.containsKey(method.getName())) {
+			return this.mappedCustomQuery.get(method.getName()).apply(arguments);
+		}
+		if (method.getName().equals(this.executeQuery.getName())) {
+			return this.executeQuery.invoke(this.repo, arguments);
+		}
+
+		int argumentsCount = arguments == null ? 0 : arguments.length;
 
 		for (Method remoteMethod : repo.getClass().getDeclaredMethods()) {
 			if (remoteMethod.getParameterCount() == argumentsCount &&
@@ -99,4 +123,5 @@ public class MongoRepositoryProxy implements InvocationHandler {
 				.bindTo(proxy)
 				.invokeWithArguments(arguments);
 	}
+
 }

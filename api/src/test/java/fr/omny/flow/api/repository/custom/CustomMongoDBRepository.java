@@ -1,4 +1,4 @@
-package fr.omny.flow.api.data.implementation;
+package fr.omny.flow.api.repository.custom;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -19,14 +19,13 @@ import com.mongodb.client.model.Projections;
 import com.mongodb.client.model.ReplaceOptions;
 
 import fr.omny.flow.api.attributes.ProcessInfo;
-import fr.omny.flow.api.data.MongoRepository;
 import fr.omny.flow.api.tasks.Dispatcher;
 import fr.omny.flow.api.utils.generic.Consumers;
 import fr.omny.flow.api.utils.mongodb.ProxyMongoObject;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.proxy.ProxyFactory;
 
-public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, ProcessInfo {
+public class CustomMongoDBRepository<T, ID> implements CustomRepository<T, ID>, ProcessInfo {
 
 	public static final ReplaceOptions UPSERT_OPTIONS = new ReplaceOptions().upsert(true);
 
@@ -41,11 +40,10 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 
 	// Synch utils
 
-	public MongoDBRepository(Class<T> dataClass, Class<ID> idClass,
+	public CustomMongoDBRepository(Class<T> dataClass, Class<ID> idClass,
 			Function<T, ID> mappingFunction,
 			String collectionName,
 			@Autowired MongoClient client,
-			@Autowired FlowCodec codecs,
 			@Autowired Dispatcher dispatcher,
 			@Autowired("databaseName") String dbName) {
 		this.dispatcher = dispatcher;

@@ -8,10 +8,14 @@ import java.util.stream.Stream;
 
 import fr.omny.flow.api.aop.ClassRegister;
 import fr.omny.flow.api.process.FlowProcess;
+import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import fr.omny.odi.Utils;
 
 public class RepositoryClassRegister implements ClassRegister {
+
+	@Autowired
+	private RepositoryFactory repositoryFactory;
 
 	@Override
 	public List<Object> register(FlowProcess plugin) {
@@ -34,7 +38,7 @@ public class RepositoryClassRegister implements ClassRegister {
 						"unchecked", "rawtypes" })
 				Class<? extends CrudRepository> sKlass = (Class<? extends CrudRepository>) implementationClass;
 				@SuppressWarnings("unchecked")
-				Object repositoryInstance = RepositoryFactory.createRepository(sKlass);
+				Object repositoryInstance = repositoryFactory.createRepository(sKlass);
 				generated.add(repositoryInstance);
 				Injector.addService(implementationClass, repositoryInstance, true);
 			}
