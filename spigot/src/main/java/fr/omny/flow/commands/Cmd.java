@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.IntStream;
 
 import org.bukkit.Location;
@@ -16,9 +15,9 @@ import org.bukkit.entity.Player;
 
 import fr.omny.flow.commands.arguments.SentenceArgument;
 import fr.omny.flow.commands.wrapper.Arguments;
+import fr.omny.flow.events.player.FailedCmpCompEvent;
+import fr.omny.flow.events.player.FailedCmpCompEvent.Reason;
 import fr.omny.flow.player.PermissionProvider;
-import fr.omny.flow.translation.I18N;
-import fr.omny.flow.utils.PlayerUtils;
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Injector;
 import lombok.Getter;
@@ -29,9 +28,6 @@ public abstract class Cmd extends Command implements CommandComponent {
 
 	@Getter
 	private Map<Integer, List<CommandComponent>> comps;
-
-	@Autowired
-	private Optional<I18N> translator;
 
 	@Autowired
 	private PermissionProvider permissionProvider;
@@ -112,7 +108,8 @@ public abstract class Cmd extends Command implements CommandComponent {
 	public boolean execute(CommandSender sender, String commandLabel, String[] args) {
 		if (sender instanceof Player player) {
 			if (!permissionProvider.hasPermission(player, this.getPermission())) {
-				translator.ifPresent(i18n -> i18n.send(PlayerUtils.flowPlayer(player), Cmd.NO_PERM));
+				// event
+				new FailedCmpCompEvent(player, this, Reason.NO_PERMISSION).callEvent();
 				return false;
 			}
 		}
@@ -173,6 +170,9 @@ public abstract class Cmd extends Command implements CommandComponent {
 			}
 			usage.replace(usage.length() - 1, usage.length(), "");
 			sender.sendMessage("§cUsage: " + usage.toString());
+			if (sender instanceof Player player) {
+				new FailedCmpCompEvent(player, this, Reason.NOT_ENOUGHT_ARGUMENTS).callEvent();
+			}
 			return false;
 		}
 		execute(sender, arguments);
