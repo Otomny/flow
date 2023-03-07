@@ -7,6 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
+import java.util.stream.StreamSupport;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
@@ -75,7 +76,7 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 
 	@Override
 	public void deleteAll(Iterable<? extends T> entities) {
-		throw new UnsupportedOperationException("Delete all is not implemented");
+		deleteAllById(StreamSupport.stream(entities.spliterator(), false).map(this.getId).toList());
 	}
 
 	@Override
@@ -86,7 +87,8 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 
 	@Override
 	public void deleteAllById(Iterable<? extends ID> ids) {
-		throw new UnsupportedOperationException("Delete all by id is not implemented");
+		ids.forEach(id -> this.cachedData.remove(id));
+		this.collection.deleteMany(Filters.in("_id", ids));
 	}
 
 	@Override
@@ -175,7 +177,11 @@ public class MongoDBRepository<T, ID> implements MongoRepository<T, ID>, Process
 
 	@Override
 	public <S extends T> boolean saveAll(Iterable<S> entities) {
-		throw new UnsupportedOperationException("saveAll by id is not implemented");
+		return StreamSupport
+			.stream(entities.spliterator(), true)
+			.map(this::save)
+			.filter(bool -> Boolean.FALSE.equals(bool))
+			.findFirst().orElse(true);
 	}
 
 	@Override

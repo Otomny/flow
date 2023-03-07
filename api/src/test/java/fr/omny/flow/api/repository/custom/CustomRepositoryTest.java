@@ -151,6 +151,62 @@ public class CustomRepositoryTest {
 	}
 
 	@Test
+	public void test_DeleteAll_Data() {
+		DataRepository dataRepository = Injector.getService(DataRepository.class);
+		dataRepository.save(new Data("test", 64, 0.2));
+		dataRepository.save(new Data("test2", 58, 0.4));
+
+		assertTrue(dataRepository.findById("test").isPresent());
+		assertTrue(dataRepository.findById("test2").isPresent());
+		assertEquals(2, dataRepository.count());
+
+		List<Data> datas = StreamSupport
+				.stream(dataRepository.findAllById(List.of("test", "test2")).spliterator(), false).toList();
+		Data data = datas.get(0);
+		Data data2 = datas.get(1);
+
+		assertEquals(64, data.getQuantity());
+		assertEquals(0.2, data.getPercentage());
+
+		assertEquals(58, data2.getQuantity());
+		assertEquals(0.4, data2.getPercentage());
+
+		dataRepository.deleteAll(List.of(data, data2));
+
+		assertEquals(0, dataRepository.count());
+		assertTrue(dataRepository.findById("test").isEmpty());
+		assertTrue(dataRepository.findById("test2").isEmpty());
+	}
+
+	@Test
+	public void test_DeleteAll_ById_Data() {
+		DataRepository dataRepository = Injector.getService(DataRepository.class);
+		dataRepository.save(new Data("test", 64, 0.2));
+		dataRepository.save(new Data("test2", 58, 0.4));
+
+		assertTrue(dataRepository.findById("test").isPresent());
+		assertTrue(dataRepository.findById("test2").isPresent());
+		assertEquals(2, dataRepository.count());
+
+		List<Data> datas = StreamSupport
+				.stream(dataRepository.findAllById(List.of("test", "test2")).spliterator(), false).toList();
+		Data data = datas.get(0);
+		Data data2 = datas.get(1);
+
+		assertEquals(64, data.getQuantity());
+		assertEquals(0.2, data.getPercentage());
+
+		assertEquals(58, data2.getQuantity());
+		assertEquals(0.4, data2.getPercentage());
+
+		dataRepository.deleteAllById(List.of("test", "test2"));
+
+		assertEquals(0, dataRepository.count());
+		assertTrue(dataRepository.findById("test").isEmpty());
+		assertTrue(dataRepository.findById("test2").isEmpty());
+	}
+
+	@Test
 	public void test_Delete_Data() {
 		DataRepository dataRepository = Injector.getService(DataRepository.class);
 		dataRepository.save(new Data("test", 64, 0.2));
