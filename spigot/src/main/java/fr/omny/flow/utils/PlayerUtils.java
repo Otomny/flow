@@ -39,8 +39,7 @@ public class PlayerUtils {
 	 * @return
 	 */
 	public static Locale getLocaleOfPlayer(Player player) {
-		String[] str = player.getLocale().split("\\(_|-)");
-		return new Locale(str[0], str[1]);
+		return player.locale();
 	}
 
 	public static class FlowPlayer implements Playerable, Sendable {

@@ -71,6 +71,9 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 				List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), new SchematicCodec(),
 						new StoredPlayerInventoryCodec()));
 		codecs.registerCodecProvider(PojoCodecProvider.builder().register(Area.class).build());
+	}
+
+	public void postLoadComponent() {
 
 	}
 
@@ -100,6 +103,8 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 		loadComponents();
 		// Add plugins components
 		Injector.addFrom(packageName);
+		// Post load components, before class registers
+		postLoadComponent();
 
 		// Get all classes that implement ClassRegister interface, and call their
 		// "register" method
@@ -150,12 +155,12 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 			Injector.wire(obj);
 			classRegister.postWire(obj);
 		}));
-		Injector.findEach(Predicates.alwaysTrue()).forEach(Injector::wire);
 		serverStart(this);
 		Injector.findEach(ServerInfo.class::isInstance).map(ServerInfo.class::cast)
 				.forEach(sInfo -> sInfo.serverStart(this));
 		Injector.findEach(ProcessInfo.class::isInstance).map(ProcessInfo.class::cast)
 				.forEach(sInfo -> sInfo.processStart());
+		Injector.findEach(Predicates.alwaysTrue()).forEach(Injector::wire);
 	}
 
 	@Override

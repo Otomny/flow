@@ -65,10 +65,6 @@ public class CmdClassRegister implements ClassRegister {
 					Injector.wire(cmdComp);
 					if (cmdComp instanceof SubCmd subCmd) {
 						deepWire(subCmd);
-						Injector.getLogger()
-								.ifPresent(logger -> {
-									logger.info("Perform class wiring on " + (subCmd == null ? "null" : subCmd.getClass()));
-								});
 
 					}
 				});
@@ -81,10 +77,6 @@ public class CmdClassRegister implements ClassRegister {
 				if (cmpComp instanceof SubCmd nestedSubCmd) {
 					deepWire(nestedSubCmd);
 				}
-				Injector.getLogger()
-						.ifPresent(logger -> {
-							logger.info("Perform class wiring on " + (cmpComp == null ? "null" : cmpComp.getClass()));
-						});
 			}
 		}
 	}

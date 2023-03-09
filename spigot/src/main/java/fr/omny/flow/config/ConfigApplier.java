@@ -7,7 +7,6 @@ import java.util.Optional;
 import org.bukkit.configuration.file.FileConfiguration;
 
 import fr.omny.odi.Autowired;
-import fr.omny.odi.Injector;
 import fr.omny.odi.listener.OnConstructorCallListener;
 import fr.omny.odi.listener.OnPreWireListener;
 
@@ -45,8 +44,6 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 				if (exists) {
 					field.set(instance, Optional.ofNullable(this.configFile.get(pathToConfigValue, currentValue)));
 				} else {
-					Injector.getLogger().ifPresent(log -> log.warning("Could not resolve path '" + pathToConfigValue
-							+ "' for field '" + field.getName() + "' of class '" + instanceClass.getCanonicalName() + "'"));
 					field.set(instance, Optional.empty());
 				}
 			} else {
@@ -82,8 +79,6 @@ public class ConfigApplier implements OnConstructorCallListener, OnPreWireListen
 			if (exists) {
 				return Optional.ofNullable(this.configFile.get(pathToConfigValue));
 			} else {
-				Injector.getLogger().ifPresent(log -> log
-						.warning("Could not resolve path '" + pathToConfigValue + "' for parameter '" + parameter.getName()));
 				return Optional.empty();
 			}
 		}
