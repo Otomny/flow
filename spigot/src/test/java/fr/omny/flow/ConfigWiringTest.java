@@ -10,7 +10,7 @@ import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
 
-import fr.omny.flow.config.Config;
+import fr.omny.flow.api.config.Config;
 import fr.omny.flow.config.ConfigApplier;
 import fr.omny.flow.data.DummyFileConfiguration;
 import fr.omny.odi.Autowired;

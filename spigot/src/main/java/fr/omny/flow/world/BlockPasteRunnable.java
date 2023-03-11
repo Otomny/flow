@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 
-import fr.omny.flow.config.Config;
+import fr.omny.flow.api.config.Config;
 import fr.omny.flow.tasks.RunnableConfig;
 import fr.omny.flow.world.pasting.BlockBatch;
 import fr.omny.flow.world.providers.BlockApplyProvider;

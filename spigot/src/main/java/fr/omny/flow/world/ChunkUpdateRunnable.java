@@ -1,6 +1,6 @@
 package fr.omny.flow.world;
 
-import fr.omny.flow.config.Config;
+import fr.omny.flow.api.config.Config;
 import fr.omny.flow.tasks.RunnableConfig;
 import fr.omny.flow.world.providers.BlockApplyProvider;
 import fr.omny.odi.Autowired;

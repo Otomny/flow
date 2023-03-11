@@ -1,4 +1,4 @@
-package fr.omny.flow.config;
+package fr.omny.flow.api.config;
 
 
 import java.lang.annotation.ElementType;

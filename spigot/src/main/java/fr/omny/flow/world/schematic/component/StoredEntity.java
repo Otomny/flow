@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import lombok.Getter;
 
 @Getter
+@SuppressWarnings("unused")
 public class StoredEntity {
 
 	public static StoredEntity fromEntity(Entity entity) {

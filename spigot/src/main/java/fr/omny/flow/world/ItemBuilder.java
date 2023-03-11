@@ -3,11 +3,14 @@ package fr.omny.flow.world;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
 
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+
+import net.kyori.adventure.text.Component;
 
 /**
  * Item builder class
@@ -42,7 +45,7 @@ public class ItemBuilder {
 	 * @return
 	 */
 	public ItemBuilder name(String name) {
-		return applyMeta(meta -> meta.setDisplayName(name));
+		return applyMeta(meta -> meta.displayName(Component.text(name)));
 	}
 
 	/**
@@ -66,13 +69,12 @@ public class ItemBuilder {
 	 */
 	public ItemBuilder description(List<String> texts) {
 		return applyMeta(meta -> {
-			List<String> lores = new ArrayList<>();
-			lores.addAll(texts);
-
+			List<Component> lores = new ArrayList<>();
+			lores.addAll(texts.stream().map(Component::text).collect(Collectors.toList()));
 			if (!meta.hasLore()) {
-				meta.setLore(lores);
+				meta.lore(texts.stream().map(Component::text).collect(Collectors.toList()));
 			} else {
-				meta.getLore().addAll(lores);
+				meta.lore().addAll(lores);
 			}
 
 		});
