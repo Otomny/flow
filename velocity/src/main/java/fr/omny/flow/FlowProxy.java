@@ -58,10 +58,8 @@ public abstract class FlowProxy implements FlowProcess {
 						BufferedReader reader = new BufferedReader(new InputStreamReader(in))) {
 					Files.copy(in, configPath, StandardCopyOption.REPLACE_EXISTING);
 				} catch (Exception e) {
-					e.printStackTrace();
 				}
 			} catch (IOException e) {
-				e.printStackTrace();
 			}
 
 		}
