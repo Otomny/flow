@@ -42,7 +42,7 @@ public class RunnableClassRegister implements ClassRegister {
 				var type = bukkitConfig.type();
 				var isPeriodic = period != 0L;
 				BukkitScheduler scheduler = Bukkit.getServer().getScheduler();
-				var bukkitRunnable = (Runnable) Utils.callConstructor(klass);
+				Runnable bukkitRunnable = (Runnable) Utils.callConstructor(klass);
 
 				Injector.wire(bukkitRunnable);
 				Injector.addService(klass, name, bukkitRunnable, true);
@@ -52,13 +52,23 @@ public class RunnableClassRegister implements ClassRegister {
 						if (isPeriodic) {
 							scheduler.runTaskTimerAsynchronously(plugin, bukkitRunnable, delay, period);
 						} else {
-							scheduler.runTaskLaterAsynchronously(plugin, bukkitRunnable, delay);
+							scheduler.runTaskLaterAsynchronously(plugin, () -> {
+								bukkitRunnable.run();
+								// Remove the runnable, because it's executed once.
+								// It doesn't need to remain in the Injector Memory
+								Injector.removeService(klass, name);
+							}, delay);
 						}
 					} else {
 						if (isPeriodic) {
 							scheduler.runTaskTimer(plugin, bukkitRunnable, delay, period);
 						} else {
-							scheduler.runTaskLater(plugin, bukkitRunnable, delay);
+							scheduler.runTaskLater(plugin, () -> {
+								bukkitRunnable.run();
+								// Remove the runnable, because it's executed once.
+								// It doesn't need to remain in the Injector Memory
+								Injector.removeService(klass, name);
+							}, delay);
 						}
 					}
 				} else if (type == SchedulerType.FLOW) {
