@@ -85,7 +85,7 @@ public class BlockUpdate {
 		String world = block.getWorld().getName();
 		var blockPosition = Tuple.of(block.getX(), block.getY(), block.getZ());
 		var chunkPosition = Tuple.of(block.getChunk().getX(), block.getChunk().getZ());
-		String newBlockData = Bukkit.createBlockData(newMaterial).toString();
+		String newBlockData = Bukkit.createBlockData(newMaterial).getAsString();
 		return new BlockUpdate(world, blockPosition, chunkPosition, newBlockData, newMaterial);
 	}
 
