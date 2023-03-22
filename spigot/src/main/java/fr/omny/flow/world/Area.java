@@ -35,6 +35,13 @@ import lombok.Setter;
 @OClass
 public class Area {
 
+	/**
+	 * 
+	 */
+	public static AreaBuilder center(Location center) {
+		return new AreaBuilder(center, center);
+	}
+
 	@BsonProperty
 	@Val
 	@OField
