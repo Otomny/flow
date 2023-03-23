@@ -24,4 +24,14 @@ public interface PermissionProvider {
 	 */
 	<T> T getPermission(Player player, String permission);
 
+	/**
+	 * Get the permission value of a specific permission
+	 * @param <T> The type stored for that permission
+	 * @param player The player 
+	 * @param permission The permission
+	 * @param defaultValue The default value if the permission is not set
+	 * @return
+	 */
+	<T> T getPermission(Player player, String permission, T defaultValue);
+
 }

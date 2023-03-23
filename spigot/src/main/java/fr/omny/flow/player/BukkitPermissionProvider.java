@@ -16,4 +16,9 @@ public class BukkitPermissionProvider implements PermissionProvider {
 		throw new UnsupportedOperationException("getPermission for object is not supported with bukkit permission system");
 	}
 
+	@Override
+	public <T> T getPermission(Player player, String permission, T defaultValue) {
+		throw new UnsupportedOperationException("getPermission for object is not supported with bukkit permission system");
+	}
+
 }
