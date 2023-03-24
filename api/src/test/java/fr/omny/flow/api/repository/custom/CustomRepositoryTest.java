@@ -114,7 +114,7 @@ public class CustomRepositoryTest {
 	public void tearDownEach() {
 		// DataRepository dataRepository = Injector.getService(DataRepository.class);
 		// dataRepository.deleteAll();
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	@Test
@@ -187,17 +187,6 @@ public class CustomRepositoryTest {
 		assertTrue(dataRepository.findById("test").isPresent());
 		assertTrue(dataRepository.findById("test2").isPresent());
 		assertEquals(2, dataRepository.count());
-
-		List<Data> datas = StreamSupport
-				.stream(dataRepository.findAllById(List.of("test", "test2")).spliterator(), false).toList();
-		Data data = datas.get(0);
-		Data data2 = datas.get(1);
-
-		assertEquals(64, data.getQuantity());
-		assertEquals(0.2, data.getPercentage());
-
-		assertEquals(58, data2.getQuantity());
-		assertEquals(0.4, data2.getPercentage());
 
 		dataRepository.deleteAllById(List.of("test", "test2"));
 

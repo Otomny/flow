@@ -29,7 +29,7 @@ public class RunOnEnvTest {
 
 	@AfterEach
 	public void tearDown() {
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	public void triggerRun(){

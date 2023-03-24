@@ -1,20 +1,17 @@
 package fr.omny.flow.api.utils.mongodb;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Consumer;
 
 import fr.omny.flow.api.utils.Objects;
+import fr.omny.odi.listener.OnProxyCallListener;
 import fr.omny.odi.proxy.ProxyFactory;
 import reactor.util.annotation.Nullable;
 
 @SuppressWarnings("unchecked")
-public class ProxyMongoObject<T> implements InvocationHandler {
+public class ProxyMongoObject<T> implements OnProxyCallListener {
 
 	public static <T> T createProxySilent(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
 		try {
@@ -26,72 +23,33 @@ public class ProxyMongoObject<T> implements InvocationHandler {
 
 	public static <T> T createProxy(T originalInstance, Consumer<FieldData<T>> fieldUpdate) throws Exception {
 		return (T) ProxyFactory.newProxyInstance(originalInstance.getClass(), originalInstance,
-				new ProxyMongoObject<T>(originalInstance, fieldUpdate));
+				List.of(new ProxyMongoObject<>(fieldUpdate)));
 	}
 
 	public static record FieldData<T>(T instance, Field field, @Nullable Object oldValue, Object newValue) {
 	}
 
-	private T instance;
-	private Class<? extends T> klass;
 	private Consumer<FieldData<T>> fieldUpdate;
-	private List<Field> fields = new ArrayList<>();
 
-	private ProxyMongoObject(T originalInstance, Consumer<FieldData<T>> fieldUpdate) {
-		this.instance = originalInstance;
+	public ProxyMongoObject(Consumer<FieldData<T>> fieldUpdate) {
 		this.fieldUpdate = fieldUpdate;
-		this.klass = (Class<? extends T>) this.instance.getClass();
-		for (Field field : this.klass.getDeclaredFields()) {
-			field.setAccessible(true);
-			fields.add(field);
-		}
 	}
 
 	@Override
-	public Object invoke(Object proxyObj, Method method, Object[] arguments) throws Throwable {
-		String methodName = method.getName();
-		Class<?>[] parametersType = new Class<?>[method.getParameters().length];
-		for (int i = 0; i < parametersType.length; i++) {
-			parametersType[i] = method.getParameters()[i].getType();
-		}
+	public boolean pass(Method method) {
+		return Objects.isSetter(method);
+	}
 
-		var remoteMethod = klass.getDeclaredMethod(methodName, parametersType);
+	@Override
+	public Object invoke(Object instance, Method remoteMethod, Object[] arguments) throws Exception {
+		String methodName = remoteMethod.getName();
+		String associatedField = methodName.replace("set", "");
+		associatedField = associatedField.substring(0, 1).toLowerCase() + associatedField.substring(1);
 
-		if (Objects.isSetter(remoteMethod)) {
-			String associatedField = methodName.replace("set", "");
-			associatedField = associatedField.substring(0, 1).toLowerCase() + associatedField.substring(1);
-
-			Field field = instance.getClass().getDeclaredField(associatedField);
-			field.setAccessible(true);
-			this.fieldUpdate.accept(new FieldData<T>(this.instance, field, field.get(this.instance), arguments[0]));
-		}
-		if (Objects.isSetter(method) || Objects.isGetter(method)) {
-			return remoteMethod.invoke(this.instance, arguments);
-		} else {
-			int oldHashCodeGlobal = java.util.Objects.hashCode(this.instance);
-			Map<Field, Integer> hashCodes = new HashMap<>();
-			this.fields.forEach(f -> {
-				try {
-					hashCodes.put(f, java.util.Objects.hashCode(f.get(this.instance)));
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			});
-			Object result = remoteMethod.invoke(this.instance, arguments);
-			int newHashCodeGlobal = java.util.Objects.hashCode(this.instance);
-			if (oldHashCodeGlobal != newHashCodeGlobal) {
-				for (Field field : this.fields) {
-					var currentValue = field.get(this.instance);
-					int oldHashCode = hashCodes.get(field);
-					int currentHashCode = java.util.Objects.hashCode(currentValue);
-					if (oldHashCode != currentHashCode) {
-						this.fieldUpdate.accept(new FieldData<T>(this.instance, field, null, currentValue));
-					}
-				}
-			}
-
-			return result;
-		}
+		Field field = instance.getClass().getDeclaredField(associatedField);
+		field.setAccessible(true);
+		this.fieldUpdate.accept(new FieldData<T>((T) instance, field, field.get(instance), arguments[0]));
+		return null;
 	}
 
 }

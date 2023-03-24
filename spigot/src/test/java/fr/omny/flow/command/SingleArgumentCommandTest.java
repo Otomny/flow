@@ -28,7 +28,7 @@ public class SingleArgumentCommandTest {
 
 	@AfterEach
 	public void tearDownForEach(){
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	@Test

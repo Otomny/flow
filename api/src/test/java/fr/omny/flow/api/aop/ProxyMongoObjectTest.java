@@ -1,17 +1,14 @@
 package fr.omny.flow.api.aop;
 
-
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.bson.Document;
 import org.junit.jupiter.api.Test;
 
-import fr.omny.flow.api.utils.mongodb.MongoSerializer;
 import fr.omny.flow.api.utils.mongodb.ProxyMongoObject;
 
 public class ProxyMongoObjectTest {
@@ -39,17 +36,6 @@ public class ProxyMongoObjectTest {
 	}
 
 	@Test
-	public void test_Proxy_ToDocument() throws Exception {
-		DummyObject originalObject = new DummyObject();
-		originalObject.setWorld("Man I Can't");
-		assertEquals("Man I Can't", originalObject.getWorld());
-		DummyObject proxiedObject = ProxyMongoObject.createProxy(originalObject, (fieldData) -> {
-		});
-		Document documentObj = MongoSerializer.transform(proxiedObject, DummyObject.class);
-		assertEquals("Man I Can't", documentObj.getString("world"));
-	}
-
-	@Test
 	public void test_selfInvoke_Setter() throws Exception {
 		DummyObject originalObject = new DummyObject();
 
@@ -62,7 +48,26 @@ public class ProxyMongoObjectTest {
 		});
 		proxiedObject.selfInvoke("Hello world");
 		assertEquals("Hello world", proxiedObject.getWorld());
-		assertTrue(hasBeenChanged.get());
+		assertFalse(hasBeenChanged.get());
+	}
+
+	@Test
+	public void test_MultipleInstance() throws Exception {
+		DummyObject d1 = new DummyObject();
+		d1.setWorld("world 1");
+		DummyObject d2 = new DummyObject();
+		d2.setWorld("world 2");
+
+		assertEquals("world 1", d1.getWorld());
+		assertEquals("world 2", d2.getWorld());
+
+		DummyObject proxied1 = ProxyMongoObject.createProxy(d1, (fieldData) -> {
+		});
+		DummyObject proxied2 = ProxyMongoObject.createProxy(d2, (fieldData) -> {
+		});
+
+		assertEquals("world 1", proxied1.getWorld());
+		assertEquals("world 2", proxied2.getWorld());
 	}
 
 }

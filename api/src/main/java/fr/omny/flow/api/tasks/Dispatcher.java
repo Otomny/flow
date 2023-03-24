@@ -1,5 +1,6 @@
 package fr.omny.flow.api.tasks;
 
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -8,19 +9,35 @@ import java.util.function.Supplier;
 
 import fr.omny.odi.Autowired;
 import fr.omny.odi.Component;
+import lombok.Getter;
 
 @Component
 public class Dispatcher {
 
+	public static final String THREAD_POOL_SIZE = "distributed.thread_config.thread_pool_size";
+
+	@Getter
 	private ScheduledExecutorService executor;
 
-	Dispatcher() {
+	@Getter
+	private int threadPoolSize;
+
+	public Dispatcher() {
 	}
 
-	public Dispatcher(@Autowired("distributed.thread_config.thread_pool_size") Integer threadPoolSize) {
+	public Dispatcher(@Autowired(THREAD_POOL_SIZE) Optional<Integer> threadPoolSize) {
 		LoggingThreadFactory threadFactory = new LoggingThreadFactory();
-		this.executor = Executors.newScheduledThreadPool(4, threadFactory);
+		this.executor = Executors.newScheduledThreadPool(threadPoolSize.orElse(2), threadFactory);
+		this.threadPoolSize = threadPoolSize.orElse(2);
 	}
+
+	// @Post
+	// public void __init(@Autowired(THREAD_POOL_SIZE) Integer threadPoolSize) {
+	// LoggingThreadFactory threadFactory = new LoggingThreadFactory();
+	// this.executor = Executors.newScheduledThreadPool(threadPoolSize,
+	// threadFactory);
+	// this.threadPoolSize = threadPoolSize;
+	// }
 
 	/**
 	 * @param runnable

@@ -29,7 +29,7 @@ public class MultipleArgumentCommandTest {
 
 	@AfterEach
 	public void tearDownForEach() {
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	@Test

@@ -91,7 +91,7 @@ public class MongoSingleClassStoreTest {
 	public void tearDownEach() {
 		// DataRepository dataRepository = Injector.getService(DataRepository.class);
 		// dataRepository.deleteAll();
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	@Test

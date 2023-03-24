@@ -43,7 +43,7 @@ public class ConfigWiringTest {
 		assertEquals("Hello world", service.getConstructedConfig());
 		assertEquals("Hello world", service.getAutowiredConfig());
 
-		Injector.wipeTest();
+		Injector.stopTest();
 	}
 
 	@Getter
