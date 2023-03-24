@@ -11,7 +11,7 @@ import fr.omny.odi.Autowired;
 import fr.omny.odi.Component;
 import lombok.Getter;
 
-@Component
+@Component(proxy = false)
 public class Dispatcher {
 
 	public static final String THREAD_POOL_SIZE = "distributed.thread_config.thread_pool_size";
@@ -22,17 +22,16 @@ public class Dispatcher {
 	@Getter
 	private int threadPoolSize;
 
-	public Dispatcher() {
-	}
-
 	public Dispatcher(@Autowired(THREAD_POOL_SIZE) Optional<Integer> threadPoolSize) {
 		LoggingThreadFactory threadFactory = new LoggingThreadFactory();
-		this.executor = Executors.newScheduledThreadPool(threadPoolSize.orElse(2), threadFactory);
+		this.executor = Executors.newScheduledThreadPool(threadPoolSize.orElse(2),
+				threadFactory);
 		this.threadPoolSize = threadPoolSize.orElse(2);
 	}
 
 	// @Post
-	// public void __init(@Autowired(THREAD_POOL_SIZE) Integer threadPoolSize) {
+	// public void __init(@Autowired(THREAD_POOL_SIZE) Optional<Integer>
+	// threadPoolSize) {
 	// LoggingThreadFactory threadFactory = new LoggingThreadFactory();
 	// this.executor = Executors.newScheduledThreadPool(threadPoolSize,
 	// threadFactory);

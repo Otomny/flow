@@ -3,6 +3,8 @@ package fr.omny.flow.api;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.lang.reflect.Parameter;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -12,6 +14,8 @@ import org.junit.jupiter.api.Test;
 
 import fr.omny.flow.api.tasks.Dispatcher;
 import fr.omny.odi.Injector;
+import fr.omny.odi.Utils;
+import fr.omny.odi.listener.OnConstructorCallListener;
 
 public class DispatcherTest {
 
@@ -40,6 +44,30 @@ public class DispatcherTest {
 		Dispatcher dispatcher = Injector.getService(Dispatcher.class);
 		assertTrue(dispatcher != null);
 		assertEquals(2, dispatcher.getThreadPoolSize());
+	}
+
+	@Test
+	public void test_Dispatcher_PoolSize_Autowire_External() throws InterruptedException, ExecutionException {
+		Utils.registerCallConstructor(new OnConstructorCallListener() {
+
+			@Override
+			public void newInstance(Object instance) {
+			}
+
+			@Override
+			public Object value(Parameter parameter) {
+				if (parameter.getType() == Optional.class) {
+					return Optional.ofNullable(8);
+				}
+				return 4;
+			}
+
+		});
+
+		Injector.addService(Dispatcher.class);
+		Dispatcher dispatcher = Injector.getService(Dispatcher.class);
+		assertTrue(dispatcher != null);
+		assertEquals(8, dispatcher.getThreadPoolSize());
 	}
 
 	@Test
