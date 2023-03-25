@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 
 import org.bukkit.Material;
 import org.bukkit.enchantments.Enchantment;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -44,8 +45,18 @@ public class ItemBuilder {
 	 * @param name
 	 * @return
 	 */
-	public ItemBuilder name(String name) {
+	public ItemBuilder nameLegacy(String name) {
 		return applyMeta(meta -> meta.displayName(Component.text(name)));
+	}
+
+	/**
+	 * Set name to item
+	 * 
+	 * @param name
+	 * @return
+	 */
+	public ItemBuilder name(Component name) {
+		return applyMeta(meta -> meta.displayName(name));
 	}
 
 	/**
@@ -67,7 +78,7 @@ public class ItemBuilder {
 	 * @param texts
 	 * @return
 	 */
-	public ItemBuilder description(List<String> texts) {
+	public ItemBuilder descriptionLegacy(List<String> texts) {
 		return applyMeta(meta -> {
 			List<Component> lores = new ArrayList<>();
 			lores.addAll(texts.stream().map(Component::text).collect(Collectors.toList()));
@@ -87,7 +98,57 @@ public class ItemBuilder {
 	 * @param texts
 	 * @return
 	 */
-	public ItemBuilder description(boolean condition, List<String> texts) {
+	public ItemBuilder descriptionLegacy(boolean condition, List<String> texts) {
+		return condition ? descriptionLegacy(texts) : this;
+	}
+
+	/**
+	 * Set lore of item
+	 * 
+	 * @param strings
+	 * @return
+	 */
+	public ItemBuilder descriptionLegacy(String... strings) {
+		return descriptionLegacy(List.of(strings));
+	}
+
+	/**
+	 * Set lore of item only if condition is true
+	 * 
+	 * @param condition
+	 * @param strings
+	 * @return
+	 */
+	public ItemBuilder descriptionLegacy(boolean condition, String... strings) {
+		return condition ? descriptionLegacy(List.of(strings)) : this;
+	}
+
+	/**
+	 * Set lore of item
+	 * 
+	 * @param texts
+	 * @return
+	 */
+	public ItemBuilder description(List<Component> texts) {
+		return applyMeta(meta -> {
+			List<Component> lores = new ArrayList<>();
+			lores.addAll(texts);
+			if (!meta.hasLore()) {
+				meta.lore(texts);
+			} else {
+				meta.lore().addAll(lores);
+			}
+		});
+	}
+
+	/**
+	 * Set lore of item only if condition is true
+	 * 
+	 * @param condition
+	 * @param texts
+	 * @return
+	 */
+	public ItemBuilder description(boolean condition, List<Component> texts) {
 		return condition ? description(texts) : this;
 	}
 
@@ -97,7 +158,7 @@ public class ItemBuilder {
 	 * @param strings
 	 * @return
 	 */
-	public ItemBuilder description(String... strings) {
+	public ItemBuilder description(Component... strings) {
 		return description(List.of(strings));
 	}
 
@@ -108,8 +169,25 @@ public class ItemBuilder {
 	 * @param strings
 	 * @return
 	 */
-	public ItemBuilder description(boolean condition, String... strings) {
+	public ItemBuilder description(boolean condition, Component... strings) {
 		return condition ? description(List.of(strings)) : this;
+	}
+
+	public ItemBuilder glow(boolean apply) {
+		return applyMeta(itemMeta -> {
+			itemMeta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+			itemMeta.addItemFlags(ItemFlag.HIDE_DESTROYS);
+			itemMeta.addItemFlags(ItemFlag.HIDE_PLACED_ON);
+			itemMeta.addItemFlags(ItemFlag.HIDE_ITEM_SPECIFICS);
+			if (apply) {
+				itemMeta.addEnchant(Enchantment.DURABILITY, 1, true);
+				itemMeta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+			}
+		});
+	}
+
+	public ItemBuilder glow() {
+		return glow(true);
 	}
 
 	/**
