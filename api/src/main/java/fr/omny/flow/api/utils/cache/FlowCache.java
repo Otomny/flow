@@ -1,4 +1,4 @@
-package fr.omny.flow.api.utils;
+package fr.omny.flow.api.utils.cache;
 
 import java.util.Map;
 import java.util.Optional;
@@ -9,11 +9,12 @@ import fr.omny.flow.api.utils.tuple.Tuple2;
 import lombok.Getter;
 
 @Getter
-public class FlowCache<K, V> extends AtomicLRUCache<K, V> {
+public class FlowCache<K, V> {
 
 	/**
 	 * Cache the timeCode First long = First insertion Second long = Last update
 	 */
+	private Cache<K, V> cache;
 	private Map<K, Tuple2<Long, Long>> timeCodeMap = new ConcurrentHashMap<>();
 
 	private final long ttl;
@@ -24,7 +25,7 @@ public class FlowCache<K, V> extends AtomicLRUCache<K, V> {
 	}
 
 	public FlowCache(int maxSize, long ttl, long maxIddle, long checkUpTime) {
-		super(maxSize);
+		this.cache = CacheFactory.createConcurrentLRUCache(maxSize);
 		this.ttl = ttl;
 		this.maxIddle = maxIddle;
 		Thread autoEvictionThread = new Thread(() -> {
@@ -44,25 +45,30 @@ public class FlowCache<K, V> extends AtomicLRUCache<K, V> {
 		autoEvictionThread.start();
 	}
 
-	@Override
 	public Optional<V> get(K key) {
-		var result = super.get(key);
-		result.ifPresent(v -> timeCodeMap.get(key).setValue(System.currentTimeMillis()));
+		var result = this.cache.get(key);
+		result.ifPresent(v -> {
+			if (!timeCodeMap.containsKey(key)) {
+				timeCodeMap.put(key, Tuple.of(System.currentTimeMillis(), System.currentTimeMillis()));
+			} else {
+				timeCodeMap.get(key).setValue(System.currentTimeMillis());
+			}
+		});
 		return result;
 	}
 
-	@Override
-	public boolean set(K key, V value) {
-		boolean result = super.set(key, value);
-		if (result)
-			timeCodeMap.put(key, Tuple.of(System.currentTimeMillis(), System.currentTimeMillis()));
-		return result;
+	public void set(K key, V value) {
+		this.cache.put(key, value);
+		timeCodeMap.put(key, Tuple.of(System.currentTimeMillis(), System.currentTimeMillis()));
 	}
 
-	@Override
 	public void clear() {
-		super.clear();
+		cache.clear();
 		this.timeCodeMap.clear();
+	}
+
+	public int size() {
+		return cache.size();
 	}
 
 }

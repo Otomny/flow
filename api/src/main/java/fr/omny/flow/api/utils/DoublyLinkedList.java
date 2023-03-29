@@ -69,15 +69,15 @@ public class DoublyLinkedList<E> {
 		this.tail = null;
 	}
 
-	public void add(E value) {
+	public synchronized void add(E value) {
 		insertTail(new Node<E>(value));
 	}
 
-	public void addHead(E value) {
+	public synchronized void addHead(E value) {
 		insertHead(new Node<E>(value));
 	}
 
-	public void insertHead(Node<E> node) {
+	public synchronized void insertHead(Node<E> node) {
 		if (this.head == null) {
 			this.head = node;
 			if (this.tail == null) {
@@ -91,7 +91,7 @@ public class DoublyLinkedList<E> {
 		size.incrementAndGet();
 	}
 
-	public void insertTail(Node<E> node) {
+	public synchronized void insertTail(Node<E> node) {
 		if (this.tail == null) {
 			this.tail = node;
 			if (this.head == null) {
@@ -108,14 +108,14 @@ public class DoublyLinkedList<E> {
 	/**
 	 * Pop tail
 	 */
-	public void pop() {
+	public synchronized void pop() {
 		popWithRef();
 	}
 
 	/**
 	 * Pop tail
 	 */
-	public Optional<Node<E>> popWithRef() {
+	public synchronized Optional<Node<E>> popWithRef() {
 		if (this.tail == null) {
 			return Optional.empty();
 		}
@@ -135,7 +135,7 @@ public class DoublyLinkedList<E> {
 	 * 
 	 * @return Value or null if
 	 */
-	public Optional<E> popWithValue() {
+	public synchronized Optional<E> popWithValue() {
 		return popWithRef().map(e -> e.value);
 	}
 
@@ -143,7 +143,7 @@ public class DoublyLinkedList<E> {
 		return size.getAcquire();
 	}
 
-	public void detach(Node<E> node) {
+	public synchronized void detach(Node<E> node) {
 		if (node != tail) {
 			node.detach();
 			if (node == head) {
@@ -155,7 +155,7 @@ public class DoublyLinkedList<E> {
 		}
 	}
 
-	public void clear() {
+	public synchronized void clear() {
 		this.head = null;
 		this.tail = null;
 	}

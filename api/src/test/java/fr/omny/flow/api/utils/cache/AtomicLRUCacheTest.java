@@ -9,20 +9,18 @@ import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
 
-import fr.omny.flow.api.utils.AtomicLRUCache;
-import fr.omny.flow.api.utils.Cache;
 
 public class AtomicLRUCacheTest {
 
 	@Test
 	public void runMultiThreadTask_WhenPutDataInConcurrentToCache_ThenNoDataLost() throws Exception {
-		final int size = 50;
+		final int size = 5000;
 		final ExecutorService executorService = Executors.newFixedThreadPool(5);
-		Cache<Integer, String> cache = new AtomicLRUCache<>(size);
+		Cache<Integer, String> cache = CacheFactory.createConcurrentLRUCache(size);
 		CountDownLatch countDownLatch = new CountDownLatch(size);
 		try {
 			IntStream.range(0, size).<Runnable>mapToObj(key -> () -> {
-				cache.set(key, "value" + key);
+				cache.put(key, "value" + key);
 				countDownLatch.countDown();
 			}).forEach(executorService::submit);
 			countDownLatch.await();

@@ -1,17 +1,15 @@
 package fr.omny.flow.api.aop.cache;
 
-
 import java.lang.reflect.Method;
 
-import fr.omny.flow.api.utils.Cache;
-import fr.omny.flow.api.utils.FlowCache;
+import fr.omny.flow.api.utils.cache.FlowCache;
 import fr.omny.odi.caching.Caching;
 import fr.omny.odi.caching.CachingImpl;
 import lombok.NonNull;
 
 public class FlowCacheImplementation implements CachingImpl {
 
-	private Cache<Integer, Object> cache;
+	private FlowCache<Integer, Object> cache;
 
 	@Override
 	public void applySettings(Class<?> forClass, Method forMethod, Caching cacheSettings) {
