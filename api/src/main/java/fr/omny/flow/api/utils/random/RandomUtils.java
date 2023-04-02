@@ -1,6 +1,5 @@
 package fr.omny.flow.api.utils.random;
 
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -115,6 +114,48 @@ public class RandomUtils {
 			double randomValue = random.nextDouble();
 			for (var pair : list) {
 				if (pair.getValue() >= randomValue) {
+					generatedWeightedEntries.add(pair.getKey());
+					continue MainLoop;
+				}
+			}
+			generatedWeightedEntries.add(sorted.get(0));
+		}
+		return generatedWeightedEntries;
+	}
+
+	/**
+	 * 
+	 * @param <T>
+	 * @param random
+	 * @param collection
+	 * @param amount
+	 * @return
+	 */
+	public static <T extends WeightedEntry> List<T> getWeightedEntryUnique(Random random, Collection<T> collection,
+			int amount) {
+		if (collection.isEmpty()) {
+			throw new NoSuchElementException();
+		}
+		List<T> sorted = new ArrayList<>(collection);
+		Collections.sort(sorted);
+		double probabilitySum = getTotalProbability(collection);
+
+		List<Tuple2<T, Double>> list = new ArrayList<>();
+
+		double start = 0;
+		double randomIndex = start;
+
+		for (T type : sorted) {
+			double currIndex = randomIndex + (type.getWeight() / probabilitySum);
+			list.add(Tuple.of(type, currIndex));
+			randomIndex = currIndex;
+		}
+		List<T> generatedWeightedEntries = new ArrayList<>();
+		MainLoop: while (generatedWeightedEntries.size() < amount) {
+			double randomValue = random.nextDouble();
+			for (var pair : list) {
+				if (pair.getValue() >= randomValue
+						&& !generatedWeightedEntries.contains(pair.getKey())) {
 					generatedWeightedEntries.add(pair.getKey());
 					continue MainLoop;
 				}
