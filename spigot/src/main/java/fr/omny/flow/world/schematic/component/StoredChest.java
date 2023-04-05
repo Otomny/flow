@@ -3,6 +3,7 @@ package fr.omny.flow.world.schematic.component;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import org.bukkit.Location;
 import org.bukkit.block.Chest;
@@ -100,4 +101,12 @@ public class StoredChest {
       e.printStackTrace();
     }
   }
+
+	@Override
+	public String toString() {
+		return "StoredChest [location=" + location + ", size=" + size + ", content=" + Arrays.toString(content) + "]";
+	}
+
+	
+
 }

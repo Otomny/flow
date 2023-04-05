@@ -28,4 +28,11 @@ public class StoredTileEntity {
 		throw new UnsupportedOperationException("storeIO not implemented");
 	}
 
+	@Override
+	public String toString() {
+		return "StoredTileEntity [location=" + location + "]";
+	}
+
+	
+
 }

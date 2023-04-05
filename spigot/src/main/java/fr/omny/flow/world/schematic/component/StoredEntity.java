@@ -34,4 +34,11 @@ public class StoredEntity {
 		throw new UnsupportedOperationException("storeIO not implemented");
 	}
 
+	@Override
+	public String toString() {
+		return "StoredEntity [location=" + location + "]";
+	}
+
+	
+
 }

@@ -69,7 +69,23 @@ public class BlockPasteRunnable implements Runnable {
 	 * @param blockUpdates The list
 	 */
 	public void add(Runnable onEnd, List<BlockUpdate> blockUpdates) {
-		add(new BlockBatch(onEnd, new ArrayList<>(blockUpdates)));
+		add(onEnd, blockUpdates, false);
+	}
+
+	/**
+	 * Add a batch to the queue
+	 * <p>
+	 * The list is copied in case it's immutable
+	 * </p>
+	 * 
+	 * Skip air is implemented by the {@link BlockPasteProvider}
+	 * 
+	 * @param onEnd        Runnable called when the batch is fully pasted
+	 * @param blockUpdates The list
+	 * @param skipAir      Whether to skip air blocks
+	 */
+	public void add(Runnable onEnd, List<BlockUpdate> blockUpdates, boolean skipAir) {
+		add(new BlockBatch(onEnd, skipAir, new ArrayList<>(blockUpdates)));
 	}
 
 	/**

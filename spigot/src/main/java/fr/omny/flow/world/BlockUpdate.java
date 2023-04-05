@@ -55,7 +55,7 @@ public class BlockUpdate {
 		String world = block.getWorld().getName();
 		var blockPosition = Tuple.of(block.getX(), block.getY(), block.getZ());
 		var chunkPosition = Tuple.of(block.getChunk().getX(), block.getChunk().getZ());
-		String newBlockData = block.getBlockData().getAsString();
+		BlockData newBlockData = block.getBlockData();
 		return new BlockUpdate(world, blockPosition, chunkPosition, newBlockData, block.getType());
 	}
 
@@ -71,8 +71,7 @@ public class BlockUpdate {
 	public static BlockUpdate create(String world, int x, int y, int z, BlockData blockAt) {
 		var blockPosition = Tuple.of(x, y, z);
 		var chunkPosition = Tuple.of(x >> 4, z >> 4);
-		String newBlockData = blockAt.getAsString();
-		return new BlockUpdate(world, blockPosition, chunkPosition, newBlockData, blockAt.getMaterial());
+		return new BlockUpdate(world, blockPosition, chunkPosition, blockAt, blockAt.getMaterial());
 	}
 
 	/**
@@ -85,21 +84,21 @@ public class BlockUpdate {
 		String world = block.getWorld().getName();
 		var blockPosition = Tuple.of(block.getX(), block.getY(), block.getZ());
 		var chunkPosition = Tuple.of(block.getChunk().getX(), block.getChunk().getZ());
-		String newBlockData = Bukkit.createBlockData(newMaterial).getAsString();
+		BlockData newBlockData = Bukkit.createBlockData(newMaterial);
 		return new BlockUpdate(world, blockPosition, chunkPosition, newBlockData, newMaterial);
 	}
 
 	private String world;
 	private Tuple3<Integer, Integer, Integer> blockPosition;
 	private Tuple2<Integer, Integer> chunkPosition;
-	private String blockData;
+	private BlockData blockData;
 	private Material type;
 
 	/**
 	 * @param newBlockData the newBlockData to set
 	 */
 	public void setNewBlockData(String newBlockData) {
-		this.blockData = newBlockData;
+		this.blockData = Bukkit.createBlockData(newBlockData);
 	}
 
 	/**
@@ -107,7 +106,7 @@ public class BlockUpdate {
 	 */
 	public void setNewType(Material newType) {
 		this.type = newType;
-		this.blockData = "minecraft:" + newType.toString().toLowerCase();
+		setNewBlockData("minecraft:" + newType.toString().toLowerCase());
 	}
 
 }

@@ -8,8 +8,7 @@ import java.util.concurrent.CompletableFuture;
  * Repository of Entities Each get statement returns a Proxy object (find, findAll, etc...) SuppressWarnings rawtypes
  * because it's typename, and typename doesn't contains generic identifiers
  */
-@SuppressWarnings("rawtypes")
-public sealed interface CrudRepository<T, ID> permits RedisRepository, MongoRepository, JavaRepository {
+public interface CrudRepository<T, ID> {
 
 	/**
 	 * Returns the number of entities

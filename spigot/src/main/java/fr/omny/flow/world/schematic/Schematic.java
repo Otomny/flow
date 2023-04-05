@@ -2,6 +2,7 @@ package fr.omny.flow.world.schematic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -15,6 +16,7 @@ import fr.omny.flow.api.data.Id;
 import fr.omny.flow.api.data.Val;
 import fr.omny.flow.api.utils.tuple.Tuple;
 import fr.omny.flow.api.utils.tuple.Tuple3;
+import fr.omny.flow.plugins.FlowPlugin;
 import fr.omny.flow.world.BlockPasteRunnable;
 import fr.omny.flow.world.BlockUpdate;
 import fr.omny.flow.world.schematic.component.StoredChest;
@@ -136,9 +138,12 @@ public class Schematic implements Itemable {
 				} else if (blockState instanceof BlockInventoryHolder inventoryHolder) {
 					inventoryHolder.getInventory().setContents(storedChest.getContent());
 				} else {
-					throw new IllegalStateException(
-							"Error, loaded block inventory was not found in world coord: [real " +
-									realLocation + "] [stored " + storedChest.getLocation() + "]");
+					Injector.getService(FlowPlugin.class)
+							.getLogger()
+							.log(Level.SEVERE, "Error loading chest inventory, block is not a chest or a container",
+									new IllegalStateException(
+											"Error, loaded block inventory was not found in world coord: [real " +
+													realLocation + "] [stored " + storedChest.getLocation() + "]"));
 				}
 			}
 			onEnd.run();

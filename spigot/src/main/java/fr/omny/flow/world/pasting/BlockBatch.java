@@ -13,6 +13,7 @@ import lombok.Setter;
 public class BlockBatch {
 
 	private Runnable onEnd;
+	private boolean skipAir;
 	private List<BlockUpdate> blockUpdate;
 
 }
