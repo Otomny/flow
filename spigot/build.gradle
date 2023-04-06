@@ -8,11 +8,17 @@ plugins {
 }
 
 dependencies {
-    api 'fr.omny:guis:1.0-SNAPSHOT'
-    api project(path: ':flow-api', configuration: 'shadow')
+    implementation 'fr.omny:guis:1.0-SNAPSHOT'
+    implementation project(':flow-api')
     
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
     testCompileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
 }
+
+shadowJar {
+    minimize()
+    archiveClassifier.set('')
+}
+
 
 description = 'Flow SPIGOT'

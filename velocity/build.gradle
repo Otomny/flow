@@ -8,8 +8,13 @@ plugins {
 }
 
 dependencies {
-    api project(path: ':flow-api', configuration: 'shadow')
+    implementation project(':flow-api')
     compileOnly 'com.velocitypowered:velocity-api:3.1.1'
+}
+
+shadowJar {
+    minimize()
+    archiveClassifier.set('')
 }
 
 description = 'Flow VELOCITY'
