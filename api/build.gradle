@@ -4,6 +4,7 @@
 
 plugins {
     id 'fr.omny.java-conventions'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 description = 'Flow API'

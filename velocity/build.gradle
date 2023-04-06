@@ -4,10 +4,11 @@
 
 plugins {
     id 'fr.omny.java-conventions'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
-    api project(':flow-api')
+    api project(path: ':flow-api', configuration: 'shadow')
     compileOnly 'com.velocitypowered:velocity-api:3.1.1'
 }
 

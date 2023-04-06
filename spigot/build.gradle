@@ -4,11 +4,12 @@
 
 plugins {
     id 'fr.omny.java-conventions'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 }
 
 dependencies {
     api 'fr.omny:guis:1.0-SNAPSHOT'
-    api project(':flow-api')
+    api project(path: ':flow-api', configuration: 'shadow')
     
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
     testCompileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")

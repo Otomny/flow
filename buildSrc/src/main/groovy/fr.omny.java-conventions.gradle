@@ -5,6 +5,7 @@
 plugins {
     id 'java-library'
     id 'maven-publish'
+    id 'com.github.johnrengelman.shadow'
 }
 
 repositories {
@@ -41,6 +42,12 @@ java.targetCompatibility = JavaVersion.VERSION_17
 
 java {
     toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+}
+
+
+shadowJar {
+    minimize()
+    archiveClassifier.set('')
 }
 
 publishing {
