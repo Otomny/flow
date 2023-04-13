@@ -21,4 +21,14 @@ public class BukkitPermissionProvider implements PermissionProvider {
 		throw new UnsupportedOperationException("getPermission for object is not supported with bukkit permission system");
 	}
 
+	@Override
+	public void addPermission(Player player, String permission) {
+		throw new UnsupportedOperationException("addPermission is not supported with bukkit permission system");
+	}
+
+	@Override
+	public <T> void addPermission(Player player, String permission, T value) {
+		throw new UnsupportedOperationException("addPermission for object is not supported with bukkit permission system");
+	}
+
 }

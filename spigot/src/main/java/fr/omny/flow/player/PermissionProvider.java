@@ -6,10 +6,29 @@ import org.bukkit.entity.Player;
  * 
  */
 public interface PermissionProvider {
-	
+
+	/**
+	 * Add a permission to a player
+	 * 
+	 * @param player     The player
+	 * @param permission The permission
+	 */
+	void addPermission(Player player, String permission);
+
+	/**
+	 * Add a permission to a player
+	 * 
+	 * @param <T>        The type of the value stored for that permission
+	 * @param player     The player
+	 * @param permission The permission
+	 * @param value      The value to store for that permission
+	 */
+	<T> void addPermission(Player player, String permission, T value);
+
 	/**
 	 * Check if a player has a specific permission
-	 * @param player The player 
+	 * 
+	 * @param player     The player
 	 * @param permission The permission
 	 * @return
 	 */
@@ -17,8 +36,9 @@ public interface PermissionProvider {
 
 	/**
 	 * Get the permission value of a specific permission
-	 * @param <T> The type stored for that permission
-	 * @param player The player 
+	 * 
+	 * @param <T>        The type stored for that permission
+	 * @param player     The player
 	 * @param permission The permission
 	 * @return
 	 */
@@ -26,9 +46,10 @@ public interface PermissionProvider {
 
 	/**
 	 * Get the permission value of a specific permission
-	 * @param <T> The type stored for that permission
-	 * @param player The player 
-	 * @param permission The permission
+	 * 
+	 * @param <T>          The type stored for that permission
+	 * @param player       The player
+	 * @param permission   The permission
 	 * @param defaultValue The default value if the permission is not set
 	 * @return
 	 */
