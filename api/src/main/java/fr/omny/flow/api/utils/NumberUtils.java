@@ -3,7 +3,10 @@ package fr.omny.flow.api.utils;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.text.DecimalFormat;
+import java.util.NavigableMap;
 import java.util.Random;
+import java.util.TreeMap;
+import java.util.Map.Entry;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class NumberUtils {
@@ -12,6 +15,16 @@ public class NumberUtils {
 			.current();
 	private static final DecimalFormat D_FORMAT = new DecimalFormat(
 			"##.##");
+
+	private static final NavigableMap<Double, String> suffixes = new TreeMap<>();
+	static {
+		suffixes.put(1_000D, "k");
+		suffixes.put(1_000_000D, "M");
+		suffixes.put(1_000_000_000D, "G");
+		suffixes.put(1_000_000_000_000D, "T");
+		suffixes.put(1_000_000_000_000_000D, "P");
+		suffixes.put(1_000_000_000_000_000_000D, "E");
+	}
 
 	public static void assertGreater(int a, int b) {
 		if (a > b) {
@@ -101,6 +114,24 @@ public class NumberUtils {
 		BigDecimal bd = new BigDecimal(Double.toString(value));
 		bd = bd.setScale(places, RoundingMode.HALF_UP);
 		return bd.toPlainString();
+	}
+
+	public static String formatMagnitude(double value) {
+		// Long.MIN_VALUE == -Long.MIN_VALUE so we need an adjustment here
+		if (value == Long.MIN_VALUE)
+			return format(Long.MIN_VALUE + 1);
+		if (value < 0)
+			return "-" + format(-value);
+		if (value < 1000)
+			return Double.toString(value); // deal with easy case
+
+		Entry<Double, String> e = suffixes.floorEntry(value);
+		Double divideBy = e.getKey();
+		String suffix = e.getValue();
+
+		double truncated = value / (divideBy / 10); // the number part of the output times 10
+		boolean hasDecimal = truncated < 100 && (truncated / 10d) != (truncated / 10);
+		return hasDecimal ? format(truncated / 10d) + suffix : format(truncated / 10) + suffix;
 	}
 
 	public static int slowlog2(int val) {
