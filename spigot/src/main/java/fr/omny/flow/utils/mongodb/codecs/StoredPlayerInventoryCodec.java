@@ -86,6 +86,7 @@ public class StoredPlayerInventoryCodec implements Codec<StoredPlayerInventory> 
 				allocated[i] = item;
 			}
 			dataInput.close();
+			reader.readEndDocument();
 			return allocated;
 		} catch (Exception e) {
 			throw new RuntimeException(e);
