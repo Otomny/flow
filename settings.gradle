@@ -3,10 +3,10 @@
  */
 
 rootProject.name = 'flow'
-include(':flow-velocity')
-include(':flow-api')
-include(':flow-spigot')
-project(":flow-velocity").projectDir = file('velocity')
-project(":flow-api").projectDir = file('api')
-project(":flow-spigot").projectDir = file('spigot')
+include(':velocity')
+include(':api')
+include(':spigot')
+project(":velocity").projectDir = file('velocity')
+project(":api").projectDir = file('api')
+project(":spigot").projectDir = file('spigot')
 

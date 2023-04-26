@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-    implementation project(':flow-api')
+    implementation project(':api')
     compileOnly 'com.velocitypowered:velocity-api:3.1.1'
 }
 
