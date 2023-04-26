@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-    implementation 'fr.omny:guis:1.0-SNAPSHOT'
+	implementation 'com.github.Otomny:guis:main-SNAPSHOT'
     implementation project(':flow-api')
     
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")

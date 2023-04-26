@@ -9,6 +9,7 @@ plugins {
 
 repositories {
     mavenLocal()
+	maven { url 'https://jitpack.io' }
     maven {
         url = uri('https://repo.papermc.io/repository/maven-public/')
     }
@@ -27,7 +28,7 @@ repositories {
 }
 
 dependencies {
-    api 'fr.omny:odi:1.0-SNAPSHOT'
+    implementation 'com.github.Otomny:odi:main-SNAPSHOT'
     api 'org.redisson:redisson:3.19.1'
     api 'org.mongodb:mongodb-driver-sync:4.9.0'
     testImplementation 'org.junit.jupiter:junit-jupiter-engine:5.9.2'
