@@ -12,10 +12,14 @@ import org.bson.codecs.EncoderContext;
 
 import fr.omny.flow.world.schematic.codecs.SchematicV1;
 import fr.omny.flow.world.schematic.codecs.SchematicVersion;
+import lombok.Setter;
 
 public class SchematicCodec implements Codec<Schematic> {
 
 	private Map<Integer, SchematicVersion> schematicLoaders;
+
+	@Setter
+	private int preferedVersion;
 
 	public SchematicCodec() {
 		this.schematicLoaders = new HashMap<>();
@@ -31,7 +35,7 @@ public class SchematicCodec implements Codec<Schematic> {
 	}
 
 	public SchematicVersion getPrefered() {
-		return get(1);
+		return get(this.preferedVersion);
 	}
 
 	@Override

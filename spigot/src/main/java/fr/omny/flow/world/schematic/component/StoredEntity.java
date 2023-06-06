@@ -4,6 +4,7 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 
 import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 
 import lombok.Getter;
@@ -24,6 +25,7 @@ public class StoredEntity {
 
 	}
 
+	private EntityType entityType;
 	private StoredLocation location;
 
 	private StoredEntity() {

@@ -66,9 +66,11 @@ public abstract class FlowPlugin extends JavaPlugin implements ServerInfo, FlowP
 	}
 
 	public void loadComponents() {
+		var schematicCodec = new SchematicCodec();
 		var codecs = Injector.getService(FlowCodec.class);
+		Injector.addService(SchematicCodec.class, schematicCodec, true);
 		codecs.addAll(
-				List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), new SchematicCodec(),
+				List.of(new LocationCodec(), new WorldCodec(), new ItemStackCodec(), schematicCodec,
 						new StoredPlayerInventoryCodec()));
 		codecs.registerCodecProvider(PojoCodecProvider.builder().register(Area.class).build());
 	}
