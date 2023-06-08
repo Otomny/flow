@@ -19,7 +19,7 @@ public class SchematicCodec implements Codec<Schematic> {
 	private Map<Integer, SchematicVersion> schematicLoaders;
 
 	@Setter
-	private int preferedVersion;
+	private int preferedVersion = 1;
 
 	public SchematicCodec() {
 		this.schematicLoaders = new HashMap<>();

@@ -2,8 +2,10 @@ package fr.omny.flow.world.schematic;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.logging.Level;
 
+import org.bson.codecs.pojo.annotations.BsonExtraElements;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -51,6 +53,11 @@ public class Schematic implements Itemable {
 	@Val
 	@Setter
 	private List<StoredChest> chests = new ArrayList<>();
+
+	@Val
+	@Setter
+	@BsonExtraElements
+	private Map<String, Object> moreData;
 
 	public int getWidth() {
 		return this.dimensions.getX();
