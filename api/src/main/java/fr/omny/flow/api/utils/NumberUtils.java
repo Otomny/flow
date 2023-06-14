@@ -123,7 +123,7 @@ public class NumberUtils {
 		if (value < 0)
 			return "-" + format(-value);
 		if (value < 1000)
-			return Double.toString(value); // deal with easy case
+			return format(value); // deal with easy case
 
 		Entry<Double, String> e = suffixes.floorEntry(value);
 		Double divideBy = e.getKey();
