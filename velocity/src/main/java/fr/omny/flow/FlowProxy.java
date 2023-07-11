@@ -73,9 +73,11 @@ public abstract class FlowProxy implements FlowProcess {
 
 		Injector.startApplication(FlowProxy.class, logger);
 		Injector.addFrom("fr.omny.flow");
-		declaredPackages().forEach(Injector::addFrom);
 
 		loadComponents();
+
+		declaredPackages().forEach(Injector::addFrom);
+
 
 		Injector.addService(Toml.class, "config", pluginConfig, true);
 
