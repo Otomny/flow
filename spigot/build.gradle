@@ -8,7 +8,7 @@ plugins {
 }
 
 dependencies {
-	implementation 'com.github.Otomny:guis:main-SNAPSHOT'
+	implementation 'com.github.Otomny:guis:1.1.2'
     implementation project(':api')
     
     compileOnly("io.papermc.paper:paper-api:1.19.4-R0.1-SNAPSHOT")
