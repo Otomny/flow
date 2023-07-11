@@ -52,7 +52,8 @@ java.sourceCompatibility = JavaVersion.VERSION_17
 java.targetCompatibility = JavaVersion.VERSION_17
 
 java {
-    toolchain.languageVersion.set(JavaLanguageVersion.of(17))
+	withSourcesJar()
+	withJavadocJar()
 }
 
 publishing {
