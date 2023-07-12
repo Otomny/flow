@@ -2,7 +2,6 @@ package fr.omny.flow.world;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
@@ -23,7 +22,7 @@ public class BlockPasteRunnable implements Runnable {
 	@Config("world.pasting.blocks_per_tick")
 	private int blockPerTicks;
 	@Autowired
-	private Optional<BlockApplyProvider> provider;
+	private BlockApplyProvider provider;
 	@Autowired
 	private BlockPasteProvider blockPasteProvider;
 
@@ -101,6 +100,7 @@ public class BlockPasteRunnable implements Runnable {
 	public void run() {
 		if (blockBatchs.isEmpty())
 			return;
+		var finalProvider = provider == null ? blockPasteProvider : provider;
 		int currentLooped = 0;
 		BlockBatch blockBatch = this.blockBatchs.peek();
 		var blockUpdates = blockBatch.getBlockUpdate();
@@ -108,7 +108,7 @@ public class BlockPasteRunnable implements Runnable {
 		while (iterator.hasNext()) {
 			var blockUpdate = iterator.next();
 			try {
-				provider.orElse(blockPasteProvider).blockPaste(blockUpdate);
+				finalProvider.blockPaste(blockUpdate);
 			} catch (Exception exception) {
 				exception.printStackTrace();
 			}
@@ -118,7 +118,7 @@ public class BlockPasteRunnable implements Runnable {
 				return;
 			}
 		}
-		provider.orElse(blockPasteProvider).endBlockPaste(blockBatch);
+		finalProvider.endBlockPaste(blockBatch);
 		try {
 			blockBatch.getOnEnd()
 					.run();
